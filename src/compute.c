@@ -6,7 +6,7 @@
 
 #include <stdbool.h>
 
-#define COULEUR 0xFF00FFFF
+
 
 unsigned version = 0;
 
