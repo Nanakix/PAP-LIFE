@@ -5,7 +5,7 @@
 #include "draw.h"
 #include "graphics.h"
 
-static unsigned couleur = 0xFFFF00FF; // Yellow
+static unsigned couleur = 0xFF00FFFF; // Yellow
 
 static void gun (int x, int y, int version)
 {

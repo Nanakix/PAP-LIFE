@@ -6,6 +6,8 @@
 
 #include <stdbool.h>
 
+#define COULEUR 0xFF00FFFF
+
 unsigned version = 0;
 
 void first_touch_v1 (void);
@@ -47,16 +49,70 @@ unsigned opencl_used [] = {
 ///////////////////////////// Version séquentielle simple
 
 
+unsigned will_live(unsigned x, unsigned y, bool alive){
+	int somme = 0;
+	int i, j;
+		
+		for (j = -1; j < 2 ; j++)
+		{
+			for (i = -1; i < 2; i++)
+			{
+				
+				if (cur_img(x+i,y+j) != 0 ) 
+				{
+					if (i == 0 && j==0)
+					{
+						// on ne compte pas la cellule courante
+					}
+					else
+					{
+						somme += 1;	
+					}
+					
+				}
+			}
+		}
+		if (alive == 0)
+		{
+			if (somme == 3) // Resurrection
+			{
+				return COULEUR;
+			}
+			return 0;
+		}
+		else
+		{
+			if (somme == 2 || somme == 3) // La cellule vit si la somme de ses voisins est égale à 2 ou 3
+			{
+				return COULEUR;
+			}
+			return 0;
+		}
+}
+
+
 unsigned compute_v0 (unsigned nb_iter)
 {
-
-  for (unsigned it = 1; it <= nb_iter; it ++) {
-    for (int i = 0; i < DIM; i++)
-      for (int j = 0; j < DIM; j++)
-	next_img (i, j) = cur_img (j, i);
-    
-    swap_images ();
+	
+  
+  for (unsigned it = 1; it <= nb_iter; it ++)
+  {
+    for (unsigned i = 0; i < DIM; i++)
+      for (unsigned j = 0; j < DIM; j++) 
+      {
+		if(i != 0 && i != DIM && j != 0 && j != DIM){  
+			if (cur_img(i,j) == 0){ // si la cellule est morte
+					next_img(i,j) = will_live(i,j,0);
+				}
+			else {
+				next_img(i,j) = will_live(i,j,1);
+				}
+		}
+      }
+  swap_images ();
   }
+  
+  
   // retourne le nombre d'étapes nécessaires à la
   // stabilisation du calcul ou bien 0 si le calcul n'est pas
   // stabilisé au bout des nb_iter itérations
