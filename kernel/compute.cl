@@ -27,58 +27,37 @@ static float4 color_scatter (unsigned c);
 
 __kernel void test (__global unsigned *in, __global unsigned *out)
 {
-  
   int x = get_global_id (0);
   int y = get_global_id (1);
   unsigned tmp_couleur = 0;
   if (x != 0 && x < DIM-1 && y != 0 && y < DIM-1)
   {
-    
     int somme = 0;
     for (int i = -1; i < 2; i++)
     {
-      
       for (int j = -1; j < 2; j++)
       {
-      /*
-        if(in[(y) * DIM + (x )]!=0){
-        printf("%u",in[(y) * DIM + (x )]);
-        printf("%2.2v4hlf\n",color_scatter(in[(y ) * DIM + (x )]));
         float4 tmp = 0;
-        //printf("%2.2v4hlf\n",tmp);
-        //float4 tmp2 = all(color_scatter(in[(y ) * DIM + (x )]));
-        //printf("%2.2v4hlf\n",tmp2);
-        }
-        */
-        float4 tmp = 0;
-        //printf("%2.2v4hlf\n",color_scatter(in[(y +i) * DIM + (x +j)]));
         if (all(color_scatter(in[(y + i) * DIM + (x + j)]) == tmp))
         {
           //ne fait rien
         }
         else{
-          //printf("%2.2v4hlf\n",color_scatter(in[(y +i) * DIM + (x +j)]));
           if (i == 0 && j == 0)
           {
           // on ne compte pas la cellule courante
-          
           }
           else
           {
-            //printf("h");
             somme += 1;
             tmp_couleur = in[(y + i) * DIM + (x + j)];
-            //printf("tmp_couleur %u",tmp_couleur);
           }
         }
       }
     }
-    //printf("somme : %d",somme);
-    // A finir
     int result = 0;
     if (all(color_scatter(in[y * DIM + x ]) == 0))
     {
-      //printf("%2.2v4hlf\n",color_scatter(in[(y ) * DIM + (x )]));
       if (somme == 3)
         result = tmp_couleur;
       else
@@ -86,16 +65,12 @@ __kernel void test (__global unsigned *in, __global unsigned *out)
     }
     else
     {
-      //printf("%2.2v4hlf\n",color_scatter(in[(y ) * DIM + (x )]));
       if (somme == 2 || somme == 3)
         result = tmp_couleur;
       else
         result = 0;
     }
-    //printf("%u ",result);
     out[y * DIM + x] = result;
-    //printf("%d", somme);
-    
   }
 }
 

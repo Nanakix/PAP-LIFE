@@ -6,7 +6,7 @@
 
 #include <stdbool.h>
 
-
+#define COULEUR 0xFF00FFFF
 
 unsigned version = 0;
 
@@ -113,7 +113,7 @@ void first_touch_v1 ()
 
 #pragma omp parallel for
   for(i=0; i<DIM ; i++) {
-    for(j=0; j < DIM ; j += 512)
+    for(j=0; j < DIM ; j++)
       next_img (i, j) = cur_img (i, j) = 0 ;
   }
 }
@@ -121,8 +121,39 @@ void first_touch_v1 ()
 // Renvoie le nombre d'itérations effectuées avant stabilisation, ou 0
 unsigned compute_v1(unsigned nb_iter)
 {
+/* version naïve */	
+  #pragma omp parallel for schedule(dynamic, 16)
+  for (unsigned it = 1; it <= nb_iter; it ++)
+  {
+    for (unsigned i = 0; i < DIM; i++)
+      for (unsigned j = 0; j < DIM; j++) 
+      {
+		if(i != 0 && i != DIM && j != 0 && j != DIM){  
+			if (cur_img(i,j) == 0) // si la cellule est morte
+				next_img(i,j) = will_live(i,j,0);
+			else 
+				next_img(i,j) = will_live(i,j,1);
+		}
+      }
+    swap_images ();
+  }
+	
+/* version tuilée*/ 
+
+
+
+
+
+
+
+
+	
   return 0;
 }
+
+
+
+
 
 
 
