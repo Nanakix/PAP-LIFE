@@ -51,9 +51,9 @@ unsigned opencl_used [] = {
   1,
 };
 
-///////////////////////////// Version séquentielle simple
+///////////////////////////// Fonctions pour la version séquentielle 
 
-
+// déterminer l'état d'une cellule pour la prochaine itération
 unsigned will_live(unsigned x, unsigned y, bool alive){
 	int somme = 0;
 	int i, j;
@@ -61,19 +61,17 @@ unsigned will_live(unsigned x, unsigned y, bool alive){
 		for (j = -1; j < 2 ; j++)
 		{
 			for (i = -1; i < 2; i++)
-				if (cur_img(x+i,y+j) != 0 ) // on regarde si la voisine est vivante
+				if (cur_img(x+i,y+j) != 0x0 ) // on regarde si la voisine est vivante
 				{
 					if (i == 0 && j==0)
-					{
-						// on ne compte pas la cellule courante
-					}
+						;// on ne compte pas la cellule courante
 					else
 						somme += 1;	
 				}
 		}
 		if (alive == 0) 
 		{
-			if (somme == 3) // Resurrection
+			if (somme == 3) // Résurrection
 				return COULEUR;
 			return 0;
 		}
@@ -84,129 +82,54 @@ unsigned will_live(unsigned x, unsigned y, bool alive){
 			return 0;
 		}
 }
-/* // met à jour les cellules locales à la tuile
-unsigned will_live_tile(unsigned x, unsigned y, bool alive, unsigned** tile)
-{
-	int i,j;
-	unsigned somme = 0;
-	// voisinage cellule
-	for (i = -1; i < 2 ; i++)
-	{
-		
-		printf("boucle 1 \n");
-		for (j = -1; j < 2 ; j++)
-		{
-		printf("boucle 2 \n");
-			if(tile[x+i][y+j] != 0) // on regarde si la voisine est vivante
-			{
-				printf("if \n");
-				if (i == 1 && j == 1)
-				{
-					// rien
-				}
-				else
-				{
-					somme += 1;
-				}
-			}
-		}
-	}
-	if (alive == 0) 
-	{
-		if (somme == 3) // Resurrection
-			return COULEUR;
-		return 0;
-	}
-	else
-	{
-		if (somme == 2 || somme == 3) // La cellule vit si la somme de ses voisins est égale à 2 ou 3
-			return COULEUR;
-		return 0;
-	}
-	
-	
-}
-*/
+
 
 // donner le bon contexte à will live 
 void update(unsigned i, unsigned j, unsigned x, unsigned y){
 
-	bool alive = cur_img(x,y) != 0;
+	bool alive = cur_img(x,y) != 0x0;
+	
 	if (x != i && x != TILEX && y != j && y != TILEY)
-	{
 		next_img(x,y) = will_live(x,y,alive);
-	}
 	else
 	{
 		if (x == i || y == j)
 		{
-			//~ printf("x == i \n");
 			if (i == 0 || j == 0)
-			{
-				// rien
-			}
+				; // rien
 			else
-			{
 				next_img(x,y) = will_live(x,y,alive);
-			}
 		}
 		else if (x == TILEX)
 		{
 			if (j == 0 )
-			{
-				// rien
-			}
+				;// rien
 			else if (y == TILEY)
-			{
-				//
-			}
+				;// rien
 			else 
-			{
 				next_img(x,y) = will_live(x,y,alive);
-			}
-			
-			//~ printf("x == TILEX \n");
 		}
 		else if (y == j)
 		{
 			if (i == 0 || j == 0)
-			{
-				// rien
-			}
+				;// rien
 			else
-			{
 				next_img(x,y) = will_live(x,y,alive);
-			}
-			
-			//~ printf("y == j \n");
 		}
 		else if (y == TILEY)
 		{
 			if (i == 0)
-			{
-				// rien
-			}
+				;// rien
 			else if (x == TILEX)
-			{
-				//
-			}
+				;// rien
 			else
-			{
 				next_img(x,y) = will_live(x,y,alive);
-			}
-			
-			//~ printf("y == TILEY \n");
 		}
 		else
 			printf("deadend \n");
-		
 	}
-	
-	
-	
-	
 }
-
+///////////////////////////// versions séquentielles simples
 unsigned compute_v0 (unsigned nb_iter)
 {
  /* version naive */	
@@ -226,12 +149,13 @@ unsigned compute_v0 (unsigned nb_iter)
     swap_images ();
   }
  */
+ 
  /* version tuilée */ 
  
  for (unsigned it = 1; it <= nb_iter; it ++)
   {
-    for (unsigned i = 0; i < DIM; i+=TILEX)
-      for (unsigned j = 0; j < DIM; j+=TILEY) 
+    for (unsigned i = 1; i < DIM-1; i+=TILEX)
+      for (unsigned j = 1; j < DIM-1; j+=TILEY) 
       {
 		for (unsigned x = i; x < i+TILEX; x++)
 		{
@@ -244,115 +168,6 @@ unsigned compute_v0 (unsigned nb_iter)
     swap_images ();
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-  //~ unsigned tile[TILEX][TILEY];  
-  //~ unsigned x,y,k,l;
-  //~ for (unsigned it = 1; it <= nb_iter; it++)
-  //~ {
-	  //~ for (unsigned i = 1; i < DIM-1 ; i += TILEX) // parcours en ligne de tuiles de DIM
-	  //~ {
-		  //~ for (unsigned j = 1; j < DIM-1; j+= TILEY) // parcours en col de tuiles dim //
-		  //~ { 
-			 //~ for (x = i; x < TILEX; x++) // parcours en ligne d'une tuile
-			 //~ {
-				//~ for (y = j; y < TILEY; y++)   // parcours en colonne d'une tuile
-			    //~ {
-				   //~ //remplissage de la tuile
-					//~ tile[y%TILEY][x%TILEX] = cur_img(y,x);	
-					  						
-					
-					//~ if ( tile[y][x] != 0)
-					//~ {
-						//~ printf("%u\n",tile[y][x]);	  
-					//~ }
-				//~ }
-			  
-			//~ }
-		  //~ // tuile remplie, on regarde l'état de chacune de ses cellules
-			//~ printf("tuile remplie \n");
-			
-		  //~ for (x = 0; x < TILEX ; x++)
-	      //~ {
-			//~ for (y = 0; y < TILEY; y++)
-			//~ {
-				//~ /* si la cellule suivante est dans la tuile */
-				//~ if (x != 0 && x != TILEX && y != 0 && y != TILEY)
-				//~ {
-					//~ if (tile[y][x] == 0)
-					//~ {
-						//~ printf("mort \n");
-					//////	next_img(x+(nbx*TILEX),(y+(nby * TILEY))) = will_live_tile(x,y,0,tile);
-						//~ for (k = x; k < x+TILEX; k++)
-						//~ {
-							//~ for (l = y; l < y +TILEY ; l++)
-							//~ {
-								//~ //next_img(k,l) = will_live(x,y,0);
-							//~ }
-						//~ }
-						
-					//~ }
-					//~ else
-					//~ {
-						//~ printf("vie \n");
-						/////next_img(x+(nbx*TILEX),(y+(nby * TILEY))) = will_live_tile(x,y,1,tile); 
-						//~ for (k = x; k < x+TILEX; k++)
-						//~ {
-							//~ for (l = y; l < y +TILEY ; l++)
-							//~ {
-								//~ next_img(k,l) = will_live(x,y,1);
-							//~ }
-						//~ }
-					//~ }
-				//~ }
-				//~ else
-				//~ {
-					//~ // rien
-				//~ }
-				
-				
-			//~ }
-							
-		  //~ }
-		  //~ nby++;
-	      //~ }		  
-	      //~ nby = 0;
-		  //~ nbx++;
-	  //~ }
-	  //~ swap_images();
-  //~ }
-  
- 
- 
- 
   // retourne le nombre d'étapes nécessaires à la
   // stabilisation du calcul ou bien 0 si le calcul n'est pas
   // stabilisé au bout des nb_iter itérations
