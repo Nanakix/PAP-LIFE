@@ -20,7 +20,7 @@ unsigned compute_v0 (unsigned nb_iter);
 unsigned compute_v1 (unsigned nb_iter);
 unsigned compute_v2 (unsigned nb_iter);
 unsigned compute_v3 (unsigned nb_iter);
-
+unsigned compute_v4 (unsigned nb_iter);
 void_func_t first_touch [] = {
   NULL,
   first_touch_v1,
