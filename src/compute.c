@@ -10,8 +10,6 @@
 #define TILEX 32
 #define TILEY 32
 
-// global
-int nbx =0, nby = 0;
 
 unsigned version = 0;
 
@@ -73,13 +71,13 @@ unsigned will_live(unsigned x, unsigned y, bool alive){
 		{
 			if (somme == 3) // Résurrection
 				return COULEUR;
-			return 0;
+			return 0x0;
 		}
 		else
 		{
 			if (somme == 2 || somme == 3) // La cellule vit si la somme de ses voisins est égale à 2 ou 3
 				return COULEUR;
-			return 0;
+			return 0x0;
 		}
 }
 
@@ -89,7 +87,7 @@ void update(unsigned i, unsigned j, unsigned x, unsigned y){
 
 	bool alive = cur_img(x,y) != 0x0;
 	
-	if (x != i && x != TILEX && y != j && y != TILEY)
+	if (x != i && x != TILEX && y != j && y != TILEY && x < DIM && y < DIM)
 		next_img(x,y) = will_live(x,y,alive);
 	else
 	{
@@ -125,30 +123,32 @@ void update(unsigned i, unsigned j, unsigned x, unsigned y){
 			else
 				next_img(x,y) = will_live(x,y,alive);
 		}
+		else if (x == DIM || y == DIM)
+			;// rien
 		else
-			printf("deadend \n");
+			printf("deadbeef  \n");
 	}
 }
 ///////////////////////////// versions séquentielles simples
 unsigned compute_v0 (unsigned nb_iter)
 {
  /* version naive */	
- /*
-   for (unsigned it = 1; it <= nb_iter; it ++)
-  {
-    for (unsigned i = 0; i < DIM; i++)
-      for (unsigned j = 0; j < DIM; j++) 
-      {
-		if(i != 0 && i != DIM && j != 0 && j != DIM){  
-			if (cur_img(i,j) == 0) // si la cellule est morte
-					next_img(i,j) = will_live(i,j,0);
-			else 
-				next_img(i,j) = will_live(i,j,1);
-		}
-      }
-    swap_images ();
-  }
- */
+ 
+   //~ for (unsigned it = 1; it <= nb_iter; it ++)
+  //~ {
+    //~ for (unsigned i = 0; i < DIM; i++)
+      //~ for (unsigned j = 0; j < DIM; j++) 
+      //~ {
+		//~ if(i != 0 && i != DIM && j != 0 && j != DIM){  
+			//~ if (cur_img(i,j) == 0) // si la cellule est morte
+					//~ next_img(i,j) = will_live(i,j,0);
+			//~ else 
+				//~ next_img(i,j) = will_live(i,j,1);
+		//~ }
+      //~ }
+    //~ swap_images ();
+  //~ }
+ 
  
  /* version tuilée */ 
  
@@ -192,7 +192,7 @@ void first_touch_v1 ()
 unsigned compute_v1(unsigned nb_iter)
 {
 /* version naïve */	
-  #pragma omp parallel for schedule(dynamic, 16)
+/*  #pragma omp parallel for schedule(dynamic, 16)
   for (unsigned it = 1; it <= nb_iter; it ++)
   {
     for (unsigned i = 0; i < DIM; i++)
@@ -207,17 +207,26 @@ unsigned compute_v1(unsigned nb_iter)
       }
     swap_images ();
   }
-	
+	*/
 /* version tuilée*/ 
 
-
-
-
-
-
-
-
-	
+	for (unsigned it = 1; it <= nb_iter; it ++)
+	{				
+		#pragma omp parallel for collapse(2) schedule(static,32)
+		for (unsigned i = 1; i < DIM-1; i++)
+		{
+		for (unsigned j = 1; j < DIM-1; j++) 
+			{
+				if(i != 0 && i != DIM && j != 0 && j != DIM){  
+					if (cur_img(i,j) == 0) // si la cellule est morte
+						next_img(i,j) = will_live(i,j,0);
+					else 
+						next_img(i,j) = will_live(i,j,1);
+				}
+			}
+		}
+		swap_images ();
+	}
   return 0;
 }
 
