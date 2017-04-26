@@ -21,6 +21,10 @@ unsigned compute_v1 (unsigned nb_iter);
 unsigned compute_v2 (unsigned nb_iter);
 unsigned compute_v3 (unsigned nb_iter);
 unsigned compute_v4 (unsigned nb_iter);
+unsigned compute_v5 (unsigned nb_iter);
+unsigned compute_v6 (unsigned nb_iter);
+
+
 void_func_t first_touch [] = {
   NULL,
   first_touch_v1,
@@ -35,14 +39,18 @@ int_func_t compute [] = {
   compute_v2,
   compute_v3,
   compute_v4,
+  compute_v5,
+  compute_v6,
 };
 
 char *version_name [] = {
-  "Séquentielle",
-  "OpenMP",
+  "Séquentielle Naïve",
+  "OpenMP Naïve",
   "OpenMP zone",
   "OpenCL",
   "OpenMP task",
+  "Séquentielle tuilée",
+  "OpenMP tuilée(collapse)",
 };
 
 unsigned opencl_used [] = {
@@ -51,11 +59,15 @@ unsigned opencl_used [] = {
   0,
   1,
   0,
+  0,
+  0,
 };
 
-///////////////////////////// Fonctions pour la version séquentielle 
-
-// déterminer l'état d'une cellule pour la prochaine itération
+/* * * * * * * * * * * * * * * * * * * * * * 
+ * Fonctions pour la version séquentielle  *
+ * * * * * * * * * * * * * * * * * * * * * */
+ 
+/* déterminer l'état d'une cellule pour la prochaine itération */
 unsigned will_live(unsigned x, unsigned y, bool alive){
 	int somme = 0;
 	int i, j;
@@ -86,7 +98,7 @@ unsigned will_live(unsigned x, unsigned y, bool alive){
 }
 
 
-// donner le bon contexte à will live 
+/* donner le bon contexte à will_live  */
 void update(unsigned i, unsigned j, unsigned x, unsigned y){
 
 	bool alive = cur_img(x,y) != 0x0;
@@ -130,48 +142,30 @@ void update(unsigned i, unsigned j, unsigned x, unsigned y){
 		else if (x == DIM || y == DIM)
 			;// rien
 		else
-			printf("deadbeef  \n");
+			printf("deadbeef\n");
 	}
 }
-///////////////////////////// versions séquentielles simples
+/* * * * * * * * * * * * * * * * 
+ * Version séquentielle naïve  *
+ * * * * * * * * * * * * * * * */
+ 
 unsigned compute_v0 (unsigned nb_iter)
 {
- /* version naive */	
- 
-   //~ for (unsigned it = 1; it <= nb_iter; it ++)
-  //~ {
-    //~ for (unsigned i = 1; i < DIM-1; i++)
-      //~ for (unsigned j = 1; j < DIM-1; j++) 
-      //~ {
-		//~ if(i != 0 && i != DIM && j != 0 && j != DIM){  
-			//~ if (cur_img(i,j) == 0) // si la cellule est morte
-					//~ next_img(i,j) = will_live(i,j,0);
-			//~ else 
-				//~ next_img(i,j) = will_live(i,j,1);
-		//~ }
-      //~ }
-    //~ swap_images ();
-  //~ }
- 
- 
- /* version tuilée */ 
- 
- for (unsigned it = 1; it <= nb_iter; it ++)
+   for (unsigned it = 1; it <= nb_iter; it ++)
   {
-    for (unsigned i = 1; i < DIM-1; i+=TILEX)
-      for (unsigned j = 1; j < DIM-1; j+=TILEY) 
+    for (unsigned i = 1; i < DIM-1; i++)
+      for (unsigned j = 1; j < DIM-1; j++) 
       {
-		for (unsigned x = i; x < i+TILEX; x++)
-		{
-			for (unsigned y = j; y < j+TILEY; y++)
-			{
-				update(i,j,x,y);
-			}
+		if(i != 0 && i != DIM && j != 0 && j != DIM){  
+			if (cur_img(i,j) == 0) // si la cellule est morte
+					next_img(i,j) = will_live(i,j,0);
+			else 
+				next_img(i,j) = will_live(i,j,1);
 		}
       }
     swap_images ();
   }
-
+  
   // retourne le nombre d'étapes nécessaires à la
   // stabilisation du calcul ou bien 0 si le calcul n'est pas
   // stabilisé au bout des nb_iter itérations
@@ -179,7 +173,9 @@ unsigned compute_v0 (unsigned nb_iter)
 }
 
 
-///////////////////////////// Version OpenMP de base
+/* * * * * * * * * * * * * *
+ * Version OpenMP de base  *
+ * * * * * * * * * * * * * */
 
 void first_touch_v1 ()
 {
@@ -196,7 +192,7 @@ void first_touch_v1 ()
 unsigned compute_v1(unsigned nb_iter)
 {
 /* version naïve */	
-/*  #pragma omp parallel for schedule(dynamic, 16)
+  #pragma omp parallel for schedule(dynamic, 16)
   for (unsigned it = 1; it <= nb_iter; it ++)
   {
     for (unsigned i = 1; i < DIM-1; i++)
@@ -211,26 +207,8 @@ unsigned compute_v1(unsigned nb_iter)
       }
     swap_images ();
   }
-	*/
-/* version tuilée*/ 
+	
 
-	for (unsigned it = 1; it <= nb_iter; it ++)
-	{				
-		#pragma omp parallel for collapse(2) schedule(static,32)
-		for (unsigned i = 1; i < DIM-1; i++)
-		{
-		for (unsigned j = 1; j < DIM-1; j++) 
-			{
-				if(i != 0 && i != DIM && j != 0 && j != DIM){  
-					if (cur_img(i,j) == 0) // si la cellule est morte
-						next_img(i,j) = will_live(i,j,0);
-					else 
-						next_img(i,j) = will_live(i,j,1);
-				}
-			}
-		}
-		swap_images ();
-	}
   return 0;
 }
 
@@ -293,4 +271,58 @@ unsigned compute_v4 (unsigned nb_iter)
   // stabilisé au bout des nb_iter itérations
   return 0;
 
+}
+
+/* * * * * * * * * * * * * * * * * * *
+ *  Version séquentielle tuilée     *
+ * * * * * * * * * * * * * * * * * * */
+unsigned compute_v5 (unsigned nb_iter)
+{
+ for (unsigned it = 1; it <= nb_iter; it ++)
+  {
+    for (unsigned i = 1; i < DIM-1; i+=TILEX)
+      for (unsigned j = 1; j < DIM-1; j+=TILEY) 
+      {
+		for (unsigned x = i; x < i+TILEX; x++)
+		{
+			for (unsigned y = j; y < j+TILEY; y++)
+			{
+				update(i,j,x,y);
+			}
+		}
+      }
+    swap_images ();
+  }
+
+  // retourne le nombre d'étapes nécessaires à la
+  // stabilisation du calcul ou bien 0 si le calcul n'est pas
+  // stabilisé au bout des nb_iter itérations
+  return 0;
+}
+
+/* * * * * * * * * * * * * * * * 
+ *  Version OpenMP tuilée     *
+ * * * * * * * * * * * * * * * */
+
+
+unsigned compute_v6(unsigned nb_iter)
+{
+	for (unsigned it = 1; it <= nb_iter; it ++)
+	{				
+		#pragma omp parallel for collapse(2) schedule(static,32)
+		for (unsigned i = 1; i < DIM-1; i++)
+		{
+		for (unsigned j = 1; j < DIM-1; j++) 
+			{
+				if(i != 0 && i != DIM && j != 0 && j != DIM){  
+					if (cur_img(i,j) == 0) // si la cellule est morte
+						next_img(i,j) = will_live(i,j,0);
+					else 
+						next_img(i,j) = will_live(i,j,1);
+				}
+			}
+		}
+		swap_images ();
+	}
+  return 0;
 }
