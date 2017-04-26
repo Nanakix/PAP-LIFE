@@ -23,12 +23,22 @@ unsigned compute_v3 (unsigned nb_iter);
 unsigned compute_v4 (unsigned nb_iter);
 unsigned compute_v5 (unsigned nb_iter);
 unsigned compute_v6 (unsigned nb_iter);
+unsigned compute_v7 (unsigned nb_iter);
+unsigned compute_v8 (unsigned nb_iter);
+unsigned compute_v9 (unsigned nb_iter);
+unsigned compute_v10 (unsigned nb_iter);
 
 
 void_func_t first_touch [] = {
   NULL,
   first_touch_v1,
   first_touch_v2,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
   NULL,
   NULL,
 };
@@ -41,6 +51,10 @@ int_func_t compute [] = {
   compute_v4,
   compute_v5,
   compute_v6,
+  compute_v7,
+  compute_v8,
+  compute_v9,
+  compute_v10,
 };
 
 char *version_name [] = {
@@ -51,6 +65,10 @@ char *version_name [] = {
   "OpenMP task",
   "Séquentielle tuilée",
   "OpenMP tuilée(collapse)",
+  "Séquentielle optimisée",
+  "OpenCL optimisée",
+  "OpenMP task optimisée",
+  "Mixte CPU/GPU",
 };
 
 unsigned opencl_used [] = {
@@ -59,6 +77,10 @@ unsigned opencl_used [] = {
   0,
   1,
   0,
+  0,
+  0,
+  0,
+  1,
   0,
   0,
 };
@@ -218,8 +240,9 @@ unsigned compute_v1(unsigned nb_iter)
 
 
 
-///////////////////////////// Version OpenMP optimisée
-
+/* * * * * * * * * * * * * * * * 
+ *  Version OpenMP optimisée   *
+ * * * * * * * * * * * * * * * */
 void first_touch_v2 ()
 {
 
@@ -232,7 +255,11 @@ unsigned compute_v2(unsigned nb_iter)
 }
 
 
-///////////////////////////// Version OpenCL
+
+/* * * * * * * * * * 
+ * Version OpenCL  *
+ * * * * * * * * * */
+
 
 // Renvoie le nombre d'itérations effectuées avant stabilisation, ou 0
 unsigned compute_v3 (unsigned nb_iter)
@@ -240,7 +267,12 @@ unsigned compute_v3 (unsigned nb_iter)
   return ocl_compute (nb_iter);
 }
 
-///////////////////////////// Version OpenMP task
+
+
+/* * * * * * * * * * * * 
+ * Version OpenMP task *
+ * * * * * * * * * * * */
+
 unsigned compute_v4 (unsigned nb_iter)
 {
   for (unsigned it = 1; it <= nb_iter; it ++)
@@ -301,7 +333,7 @@ unsigned compute_v5 (unsigned nb_iter)
 }
 
 /* * * * * * * * * * * * * * * * 
- *  Version OpenMP tuilée     *
+ *  Version OpenMP tuilée      *
  * * * * * * * * * * * * * * * */
 
 
@@ -325,4 +357,38 @@ unsigned compute_v6(unsigned nb_iter)
 		swap_images ();
 	}
   return 0;
+}
+
+
+
+/* * * * * * * * * * * * * * * * * *
+ * Version séquentielle optimisée  *
+ * * * * * * * * * * * * * * * * * */
+unsigned compute_v7(unsigned nb_iter)
+{
+  return 0; // on ne s'arrête jamais
+}
+
+/* * * * * * * * * * * * * * * 
+ * Version OpenCL optimisée  *
+ * * * * * * * * * * * * * * */
+unsigned compute_v8(unsigned nb_iter)
+{
+  return 0; // on ne s'arrête jamais
+}
+
+/* * * * * * * * * * * * * * * * * *
+ * Version OpenMP task optimisée   *
+ * * * * * * * * * * * * * * * * * */
+unsigned compute_v9(unsigned nb_iter)
+{
+	return ocl_compute (nb_iter);
+}
+
+/* * * * * * * * * * * * * * *
+ * Version mixte optimisée   *
+ * * * * * * * * * * * * * * */
+unsigned compute_v10(unsigned nb_iter)
+{
+  return 0; // on ne s'arrête jamais
 }
