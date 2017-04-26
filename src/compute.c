@@ -26,6 +26,7 @@ void_func_t first_touch [] = {
   first_touch_v1,
   first_touch_v2,
   NULL,
+  NULL,
 };
 
 int_func_t compute [] = {
@@ -33,6 +34,7 @@ int_func_t compute [] = {
   compute_v1,
   compute_v2,
   compute_v3,
+  compute_v4,
 };
 
 char *version_name [] = {
@@ -40,6 +42,7 @@ char *version_name [] = {
   "OpenMP",
   "OpenMP zone",
   "OpenCL",
+  "OpenMP task",
 };
 
 unsigned opencl_used [] = {
@@ -47,6 +50,7 @@ unsigned opencl_used [] = {
   0,
   0,
   1,
+  0,
 };
 
 ///////////////////////////// Fonctions pour la version séquentielle 
@@ -256,4 +260,37 @@ unsigned compute_v2(unsigned nb_iter)
 unsigned compute_v3 (unsigned nb_iter)
 {
   return ocl_compute (nb_iter);
+}
+
+///////////////////////////// Version OpenMP task
+unsigned compute_v4 (unsigned nb_iter)
+{
+  for (unsigned it = 1; it <= nb_iter; it ++)
+  {
+    #pragma omp parallel
+    #pragma omp single
+    {
+    for (unsigned i = 1; i < DIM-1; i+=TILEX)
+      for (unsigned j = 1; j < DIM-1; j+=TILEY) 
+      {
+    
+		for (unsigned x = i; x < i+TILEX; x++)
+		{
+		  #pragma omp task firstprivate(x)
+			for (unsigned y = j; y < j+TILEY; y++)
+			{
+				update(i,j,x,y);
+			}
+		}
+      }
+    #pragma omp taskwait
+    swap_images ();
+    } // end parallel
+  }
+
+  // retourne le nombre d'étapes nécessaires à la
+  // stabilisation du calcul ou bien 0 si le calcul n'est pas
+  // stabilisé au bout des nb_iter itérations
+  return 0;
+
 }
