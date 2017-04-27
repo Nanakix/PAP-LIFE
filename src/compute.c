@@ -394,6 +394,95 @@ void calculTableauTuile(unsigned i, unsigned j, int indiceI, int indiceJ)
 	//printf("tabTuile : indiceI : %d, indiceJ : %d, nbCaseCouleur = %d\n", indiceI, indiceJ, nbCaseCouleur);
 }
 
+int check_neighbors_opti (int indiceI, int indiceJ)
+{
+	int sommeDesVoisins = 0;
+	int indiceMaxTableau = TAILLETABLEAU - 1;
+	if(indiceI == 0 && indiceJ == 0) // coin nord-ouest
+	{
+		// 3 voisins à voir s, se, e
+		sommeDesVoisins += tabTuile[indiceI][indiceJ+1];
+		sommeDesVoisins += tabTuile[indiceI+1][indiceJ];
+		sommeDesVoisins += tabTuile[indiceI+1][indiceJ+1];
+	}
+	else if(indiceI == 0)
+	{
+		if(indiceJ == indiceMaxTableau) // coin sud-ouest
+		{
+			// 3 voisins à voir n, ne, e
+			sommeDesVoisins += tabTuile[indiceI][indiceMaxTableau-1];
+			sommeDesVoisins += tabTuile[indiceI+1][indiceMaxTableau];
+			sommeDesVoisins += tabTuile[indiceI+1][indiceMaxTableau-1];
+		}
+		else // bord ouest hors coin
+		{
+			// 5 voisins à voir n, ne, e , se, s // 
+			sommeDesVoisins += tabTuile[indiceI][indiceJ-1];
+			sommeDesVoisins += tabTuile[indiceI+1][indiceJ-1];
+			sommeDesVoisins += tabTuile[indiceI+1][indiceJ];
+			sommeDesVoisins += tabTuile[indiceI][indiceJ+1];
+			sommeDesVoisins += tabTuile[indiceI+1][indiceJ+1];
+		}
+	}
+	else if(indiceJ == 0)
+	{
+		if(indiceI == indiceMaxTableau) // coin nord-est
+		{
+			// 3 voisins à voir o, so, s
+			sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ];
+			sommeDesVoisins += tabTuile[indiceMaxTableau][indiceJ+1];
+			sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ+1];
+		}
+		else // bord nord hors coin
+		{
+			// 5 voisins à voir o, so , s , se, e
+			sommeDesVoisins += tabTuile[indiceI-1][indiceJ];
+			sommeDesVoisins += tabTuile[indiceI-1][indiceJ+1];
+			sommeDesVoisins += tabTuile[indiceI][indiceJ+1];
+			sommeDesVoisins += tabTuile[indiceI+1][indiceJ+1];
+			sommeDesVoisins += tabTuile[indiceI+1][indiceJ];
+		}
+	}
+	else if(indiceI == indiceMaxTableau && indiceJ == indiceMaxTableau) // coin sud-est
+	{
+		// 3 voisins à voir o, no , n
+		sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceMaxTableau];
+		sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceMaxTableau-1];
+		sommeDesVoisins += tabTuile[indiceMaxTableau][indiceMaxTableau-1];
+	}
+	else if(indiceI == indiceMaxTableau) // bord est hors coin
+	{
+		// 5 voisins à voir n, no, o, so, s
+		sommeDesVoisins += tabTuile[indiceMaxTableau][indiceJ-1];
+		sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ-1];
+		sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ];
+		sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ+1];
+		sommeDesVoisins += tabTuile[indiceMaxTableau][indiceJ+1];
+	}
+	else if(indiceJ == indiceMaxTableau) // bord sud hors coin
+	{
+		// 5 voisins à voir o, no, n, ne, e
+		sommeDesVoisins += tabTuile[indiceI-1][indiceMaxTableau];
+		sommeDesVoisins += tabTuile[indiceI-1][indiceMaxTableau-1];
+		sommeDesVoisins += tabTuile[indiceI][indiceMaxTableau-1];
+		sommeDesVoisins += tabTuile[indiceI+1][indiceMaxTableau-1];
+		sommeDesVoisins += tabTuile[indiceI+1][indiceMaxTableau];
+	}
+	else // cellule hors bord
+	{
+		// 8 voisins à voir : toutes directions sauf soi-même
+		sommeDesVoisins += tabTuile[indiceI-1][indiceJ-1];
+		sommeDesVoisins += tabTuile[indiceI][indiceJ-1];
+		sommeDesVoisins += tabTuile[indiceI+1][indiceJ-1];
+		sommeDesVoisins += tabTuile[indiceI-1][indiceJ];
+		sommeDesVoisins += tabTuile[indiceI+1][indiceJ];
+		sommeDesVoisins += tabTuile[indiceI-1][indiceJ+1];
+		sommeDesVoisins += tabTuile[indiceI][indiceJ+1];
+		sommeDesVoisins += tabTuile[indiceI+1][indiceJ+1];
+	}
+	return sommeDesVoisins;
+}
+
 /* * * * * * * * * * * * * * * * * *
  * Version séquentielle optimisée  *
  * * * * * * * * * * * * * * * * * */
@@ -402,7 +491,6 @@ unsigned compute_v7(unsigned nb_iter)
 	for (unsigned it = 1; it <= nb_iter; it ++)
 	{
 		realIt++;
-		//printf("%d",realIt);
 		for (unsigned i = 1; i < DIM-1; i+=TILEX)
 		{
 			int indiceI = (i-(1%TILEX)) / TILEX;
@@ -413,94 +501,9 @@ unsigned compute_v7(unsigned nb_iter)
 					calculTableauTuile(i,j,indiceI,indiceJ);
 				else
 				{
-					int indiceMaxTableau = TAILLETABLEAU - 1;
-					int sommeDesVoisins = 0;
 					if(tabTuile[indiceI][indiceJ] == 0)
 					{
-						if(indiceI == 0 && indiceJ == 0)
-						{
-							// 3 voisins à voir
-							sommeDesVoisins += tabTuile[indiceI][indiceJ+1];
-							sommeDesVoisins += tabTuile[indiceI+1][indiceJ];
-							sommeDesVoisins += tabTuile[indiceI+1][indiceJ+1];
-						}
-						else if(indiceI == 0)
-						{
-							if(indiceJ == indiceMaxTableau)
-							{
-								// 3 voisins à voir
-								sommeDesVoisins += tabTuile[indiceI][indiceMaxTableau-1];
-								sommeDesVoisins += tabTuile[indiceI+1][indiceMaxTableau];
-								sommeDesVoisins += tabTuile[indiceI+1][indiceMaxTableau-1];
-							}
-							else
-							{
-								// 5 voisins à voir
-								sommeDesVoisins += tabTuile[indiceI][indiceJ-1];
-								sommeDesVoisins += tabTuile[indiceI+1][indiceJ-1];
-								sommeDesVoisins += tabTuile[indiceI+1][indiceJ];
-								sommeDesVoisins += tabTuile[indiceI][indiceJ+1];
-								sommeDesVoisins += tabTuile[indiceI+1][indiceJ+1];
-							}
-						}
-						else if(indiceJ == 0)
-						{
-							if(indiceI == indiceMaxTableau)
-							{
-								// 3 voisins à voir
-								sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ];
-								sommeDesVoisins += tabTuile[indiceMaxTableau][indiceJ+1];
-								sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ+1];
-							}
-							else
-							{
-								// 5 voisins à voir
-								sommeDesVoisins += tabTuile[indiceI-1][indiceJ];
-								sommeDesVoisins += tabTuile[indiceI-1][indiceJ+1];
-								sommeDesVoisins += tabTuile[indiceI][indiceJ+1];
-								sommeDesVoisins += tabTuile[indiceI+1][indiceJ+1];
-								sommeDesVoisins += tabTuile[indiceI+1][indiceJ];
-							}
-						}
-						else if(indiceI == indiceMaxTableau && indiceJ == indiceMaxTableau)
-						{
-							// 3 voisins à voir
-							sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceMaxTableau];
-							sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceMaxTableau-1];
-							sommeDesVoisins += tabTuile[indiceMaxTableau][indiceMaxTableau-1];
-						}
-						else if(indiceI == indiceMaxTableau)
-						{
-							// 5 voisins à voir
-							sommeDesVoisins += tabTuile[indiceMaxTableau][indiceJ-1];
-							sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ-1];
-							sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ];
-							sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ+1];
-							sommeDesVoisins += tabTuile[indiceMaxTableau][indiceJ+1];
-						}
-						else if(indiceJ == indiceMaxTableau)
-						{
-							// 5 voisins à voir
-							sommeDesVoisins += tabTuile[indiceI-1][indiceMaxTableau];
-							sommeDesVoisins += tabTuile[indiceI-1][indiceMaxTableau-1];
-							sommeDesVoisins += tabTuile[indiceI][indiceMaxTableau-1];
-							sommeDesVoisins += tabTuile[indiceI+1][indiceMaxTableau-1];
-							sommeDesVoisins += tabTuile[indiceI+1][indiceMaxTableau];
-						}
-						else
-						{
-							// 8 voisins à voir
-							sommeDesVoisins += tabTuile[indiceI-1][indiceJ-1];
-							sommeDesVoisins += tabTuile[indiceI][indiceJ-1];
-							sommeDesVoisins += tabTuile[indiceI+1][indiceJ-1];
-							sommeDesVoisins += tabTuile[indiceI-1][indiceJ];
-							sommeDesVoisins += tabTuile[indiceI+1][indiceJ];
-							sommeDesVoisins += tabTuile[indiceI-1][indiceJ+1];
-							sommeDesVoisins += tabTuile[indiceI][indiceJ+1];
-							sommeDesVoisins += tabTuile[indiceI+1][indiceJ+1];
-						}
-						//printf("%d ",sommeDesVoisins);
-						if(sommeDesVoisins != 0)
+						if(check_neighbors_opti(indiceI, indiceJ) != 0)
 							calculTableauTuile(i,j,indiceI,indiceJ);
 					}
 					else
@@ -510,7 +513,6 @@ unsigned compute_v7(unsigned nb_iter)
 		}
 		swap_images ();
 	}
-
 	return 0; // on ne s'arrête jamais
 }
 
