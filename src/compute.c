@@ -10,7 +10,12 @@
 #define TILEX 32
 #define TILEY 32
 
+#define TAILLETABLEAU DEFAULT_DIM/TILEX
+//int tailleTableau = DEFAULT_DIM/TILEX;
 
+// Tableau qui contiendra le nombre de cellule non morte d'une tuile
+int tabTuile[TAILLETABLEAU][TAILLETABLEAU];
+int realIt = 0;
 unsigned version = 0;
 
 void first_touch_v1 (void);
@@ -99,12 +104,14 @@ unsigned will_live(unsigned x, unsigned y, bool alive){
 			for (i = -1; i < 2; i++)
 				if (cur_img(x+i,y+j) != 0x0 ) // on regarde si la voisine est vivante
 				{
-					if (i == 0 && j==0)
-						;// on ne compte pas la cellule courante
-					else
+					//if (i == 0 && j==0)
+						//;// on ne compte pas la cellule courante
+					//else
 						somme += 1;	
 				}
 		}
+		if(cur_img(x,y) != 0x0)
+			somme -=1;
 		if (alive == 0) 
 		{
 			if (somme == 3) // Résurrection
@@ -358,14 +365,167 @@ unsigned compute_v6(unsigned nb_iter)
 	}
   return 0;
 }
-
-
+// Permet de calculer et d'ajouter le contenu du tableau de tuile
+void calculTableauTuile(unsigned i, unsigned j, int indiceI, int indiceJ)
+{
+	int nbCaseCouleur = 0;
+	for (unsigned x = i; x < i+TILEX; x++)
+	{
+		for (unsigned y = j; y < j+TILEY; y++)
+		{
+			update(i,j,x,y);
+			// Regarde si la case n'est pas vide est imcrémente le compteur.
+			if(next_img(x,y) != 0x0)
+				nbCaseCouleur++;
+		}
+	}
+	//printf("nbCaseCouleur = %d ",nbCaseCouleur);
+	
+	tabTuile[indiceI][indiceJ] = nbCaseCouleur;
+	//printf("tabTuile : indiceI : %d, indiceJ : %d, nbCaseCouleur = %d\n", indiceI, indiceJ, nbCaseCouleur);
+}
 
 /* * * * * * * * * * * * * * * * * *
  * Version séquentielle optimisée  *
  * * * * * * * * * * * * * * * * * */
 unsigned compute_v7(unsigned nb_iter)
 {
+  for (unsigned it = 1; it <= nb_iter; it ++)
+  {
+  	realIt++;
+  	//printf("%d",realIt);
+    for (unsigned i = 1; i < DIM-1; i+=TILEX)
+    {
+      int indiceI = (i-(1%TILEX)) / TILEX;
+      for (unsigned j = 1; j < DIM-1; j+=TILEY) 
+      {
+        int indiceJ = (j-(1%TILEY)) / TILEY;
+        if(realIt == 1)
+        {
+          //printf("h");
+        	calculTableauTuile(i,j,indiceI,indiceJ);
+        	/*
+        	int nbCaseCouleur = 0;
+					for (unsigned x = i; x < i+TILEX; x++)
+					{
+						for (unsigned y = j; y < j+TILEY; y++)
+						{
+							update(i,j,x,y);
+							// Regarde si la case n'est pas vide est imcrémente le compteur.
+							if(next_img(x,y) != 0x0)
+								nbCaseCouleur++;
+						}
+					}
+					//printf("nbCaseCouleur = %d ",nbCaseCouleur);
+				
+					tabTuile[indiceI][indiceJ] = nbCaseCouleur;
+					printf("tabTuile : indiceI : %d, indiceJ : %d, nbCaseCouleur = %d\n", indiceI, indiceJ, nbCaseCouleur);
+					*/
+				}
+				else
+				{
+					
+					int indiceMaxTableau = TAILLETABLEAU - 1;
+					//printf("h");
+					int sommeDesVoisins = 0;
+					if(tabTuile[indiceI][indiceJ] == 0)
+					{
+						if(indiceI == 0 && indiceJ == 0)
+						{
+							// 3 voisins à voir
+							sommeDesVoisins += tabTuile[indiceI][indiceJ+1];
+							sommeDesVoisins += tabTuile[indiceI+1][indiceJ];
+							sommeDesVoisins += tabTuile[indiceI+1][indiceJ+1];
+						}
+						else if(indiceI == 0)
+						{
+							if(indiceJ == indiceMaxTableau)
+							{
+								// 3 voisins à voir
+								sommeDesVoisins += tabTuile[indiceI][indiceMaxTableau-1];
+								sommeDesVoisins += tabTuile[indiceI+1][indiceMaxTableau];
+								sommeDesVoisins += tabTuile[indiceI+1][indiceMaxTableau-1];
+							}
+							else
+							{
+								// 5 voisins à voir
+								sommeDesVoisins += tabTuile[indiceI][indiceJ-1];
+								sommeDesVoisins += tabTuile[indiceI+1][indiceJ-1];
+								sommeDesVoisins += tabTuile[indiceI+1][indiceJ];
+								sommeDesVoisins += tabTuile[indiceI][indiceJ+1];
+								sommeDesVoisins += tabTuile[indiceI+1][indiceJ+1];
+							}
+						}
+						else if(indiceJ == 0)
+						{
+							if(indiceI == indiceMaxTableau)
+							{
+								// 3 voisins à voir
+								sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ];
+								sommeDesVoisins += tabTuile[indiceMaxTableau][indiceJ+1];
+								sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ+1];
+							}
+							else
+							{
+								// 5 voisins à voir
+								sommeDesVoisins += tabTuile[indiceI-1][indiceJ];
+								sommeDesVoisins += tabTuile[indiceI-1][indiceJ+1];
+								sommeDesVoisins += tabTuile[indiceI][indiceJ+1];
+								sommeDesVoisins += tabTuile[indiceI+1][indiceJ+1];
+								sommeDesVoisins += tabTuile[indiceI+1][indiceJ];
+							}
+						}
+						else if(indiceI == indiceMaxTableau && indiceJ == indiceMaxTableau)
+						{
+							// 3 voisins à voir
+							sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceMaxTableau];
+							sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceMaxTableau-1];
+							sommeDesVoisins += tabTuile[indiceMaxTableau][indiceMaxTableau-1];
+						}
+						else if(indiceI == indiceMaxTableau)
+						{
+							// 5 voisins à voir
+							sommeDesVoisins += tabTuile[indiceMaxTableau][indiceJ-1];
+							sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ-1];
+							sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ];
+							sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ+1];
+							sommeDesVoisins += tabTuile[indiceMaxTableau][indiceJ+1];
+						}
+						else if(indiceJ == indiceMaxTableau)
+						{
+							// 5 voisins à voir
+							sommeDesVoisins += tabTuile[indiceI-1][indiceMaxTableau];
+							sommeDesVoisins += tabTuile[indiceI-1][indiceMaxTableau-1];
+							sommeDesVoisins += tabTuile[indiceI][indiceMaxTableau-1];
+							sommeDesVoisins += tabTuile[indiceI+1][indiceMaxTableau-1];
+							sommeDesVoisins += tabTuile[indiceI+1][indiceMaxTableau];
+						}
+						else
+						{
+							// 8 voisins à voir
+							sommeDesVoisins += tabTuile[indiceI-1][indiceJ-1];
+							sommeDesVoisins += tabTuile[indiceI][indiceJ-1];
+							sommeDesVoisins += tabTuile[indiceI+1][indiceJ-1];
+							sommeDesVoisins += tabTuile[indiceI-1][indiceJ];
+							sommeDesVoisins += tabTuile[indiceI+1][indiceJ];
+							sommeDesVoisins += tabTuile[indiceI-1][indiceJ+1];
+							sommeDesVoisins += tabTuile[indiceI][indiceJ+1];
+							sommeDesVoisins += tabTuile[indiceI+1][indiceJ+1];
+						}
+						//printf("%d ",sommeDesVoisins);
+						if(sommeDesVoisins != 0)
+							calculTableauTuile(i,j,indiceI,indiceJ);
+					}
+					else
+					{
+						calculTableauTuile(i,j,indiceI,indiceJ);
+					}
+				}
+      }
+    }
+    swap_images ();
+  }
+
   return 0; // on ne s'arrête jamais
 }
 
