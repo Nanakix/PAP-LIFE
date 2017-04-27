@@ -102,6 +102,7 @@ unsigned will_live(unsigned x, unsigned y, bool alive){
 		for (j = -1; j < 2 ; j++)
 		{
 			for (i = -1; i < 2; i++)
+			{
 				if (cur_img(x+i,y+j) != 0x0 ) // on regarde si la voisine est vivante
 				{
 					//if (i == 0 && j==0)
@@ -109,6 +110,7 @@ unsigned will_live(unsigned x, unsigned y, bool alive){
 					//else
 						somme += 1;	
 				}
+			}
 		}
 		if(cur_img(x,y) != 0x0)
 			somme -=1;
@@ -180,21 +182,23 @@ void update(unsigned i, unsigned j, unsigned x, unsigned y){
  
 unsigned compute_v0 (unsigned nb_iter)
 {
-   for (unsigned it = 1; it <= nb_iter; it ++)
-  {
-	printf("%u \n",it);
-    for (unsigned i = 1; i < DIM-1; i++)
-      for (unsigned j = 1; j < DIM-1; j++) 
-      {
-		if(i != 0 && i != DIM && j != 0 && j != DIM){  
-			if (cur_img(i,j) == 0) // si la cellule est morte
-					next_img(i,j) = will_live(i,j,0);
-			else 
-				next_img(i,j) = will_live(i,j,1);
+	for (unsigned it = 1; it <= nb_iter; it ++)
+	{	
+		printf("%u \n",it);
+		for (unsigned i = 1; i < DIM-1; i++)
+		{
+			for (unsigned j = 1; j < DIM-1; j++) 
+			{
+				if(i != 0 && i != DIM && j != 0 && j != DIM){  
+					if (cur_img(i,j) == 0) // si la cellule est morte
+							next_img(i,j) = will_live(i,j,0);
+					else 
+						next_img(i,j) = will_live(i,j,1);
+				}
+			}
 		}
-      }
-    swap_images ();
-  }
+		swap_images ();
+	}
   
   // retourne le nombre d'étapes nécessaires à la
   // stabilisation du calcul ou bien 0 si le calcul n'est pas
@@ -226,15 +230,17 @@ unsigned compute_v1(unsigned nb_iter)
   for (unsigned it = 1; it <= nb_iter; it ++)
   {
     for (unsigned i = 1; i < DIM-1; i++)
-      for (unsigned j = 1; j < DIM-1; j++) 
-      {
-		if(i != 0 && i != DIM && j != 0 && j != DIM){  
-			if (cur_img(i,j) == 0) // si la cellule est morte
-				next_img(i,j) = will_live(i,j,0);
-			else 
-				next_img(i,j) = will_live(i,j,1);
+    {
+		for (unsigned j = 1; j < DIM-1; j++) 
+		{
+			if(i != 0 && i != DIM && j != 0 && j != DIM){  
+				if (cur_img(i,j) == 0) // si la cellule est morte
+					next_img(i,j) = will_live(i,j,0);
+				else 
+					next_img(i,j) = will_live(i,j,1);
+			}
 		}
-      }
+    }
     swap_images ();
   }
 	
@@ -289,20 +295,22 @@ unsigned compute_v4 (unsigned nb_iter)
 	#pragma omp parallel for collapse(2)
 	
 	for (unsigned i = 1; i < DIM-1; i+=TILEX)
-	  for (unsigned j = 1; j < DIM-1; j+=TILEY) 
-	  {
-	#pragma omp task
 	{
-		for (unsigned x = i; x < i+TILEX; x++)
+		for (unsigned j = 1; j < DIM-1; j+=TILEY) 
 		{
-			for (unsigned y = j; y < j+TILEY; y++)
+			#pragma omp task
 			{
-				update(i,j,x,y);
+				for (unsigned x = i; x < i+TILEX; x++)
+				{
+					for (unsigned y = j; y < j+TILEY; y++)
+					{
+						update(i,j,x,y);
+					}
+				}
 			}
 		}
-	  }
 	} // end parallel
-swap_images ();
+	swap_images ();
   }
   // retourne le nombre d'étapes nécessaires à la
   // stabilisation du calcul ou bien 0 si le calcul n'est pas
@@ -319,16 +327,18 @@ unsigned compute_v5 (unsigned nb_iter)
  for (unsigned it = 1; it <= nb_iter; it ++)
   {
     for (unsigned i = 1; i < DIM-1; i+=TILEX)
-      for (unsigned j = 1; j < DIM-1; j+=TILEY) 
-      {
-		for (unsigned x = i; x < i+TILEX; x++)
+    {
+		for (unsigned j = 1; j < DIM-1; j+=TILEY) 
 		{
-			for (unsigned y = j; y < j+TILEY; y++)
+			for (unsigned x = i; x < i+TILEX; x++)
 			{
-				update(i,j,x,y);
+				for (unsigned y = j; y < j+TILEY; y++)
+				{
+					update(i,j,x,y);
+				}
 			}
 		}
-      }
+    }
     swap_images ();
   }
 
@@ -350,7 +360,7 @@ unsigned compute_v6(unsigned nb_iter)
 		#pragma omp parallel for collapse(2) schedule(static,32)
 		for (unsigned i = 1; i < DIM-1; i++)
 		{
-		for (unsigned j = 1; j < DIM-1; j++) 
+			for (unsigned j = 1; j < DIM-1; j++) 
 			{
 				if(i != 0 && i != DIM && j != 0 && j != DIM){  
 					if (cur_img(i,j) == 0) // si la cellule est morte
@@ -359,7 +369,7 @@ unsigned compute_v6(unsigned nb_iter)
 						next_img(i,j) = will_live(i,j,1);
 				}
 			}
-		}
+		} // end parallel for
 		swap_images ();
 	}
   return 0;
@@ -389,43 +399,21 @@ void calculTableauTuile(unsigned i, unsigned j, int indiceI, int indiceJ)
  * * * * * * * * * * * * * * * * * */
 unsigned compute_v7(unsigned nb_iter)
 {
-  for (unsigned it = 1; it <= nb_iter; it ++)
-  {
-  	realIt++;
-  	//printf("%d",realIt);
-    for (unsigned i = 1; i < DIM-1; i+=TILEX)
-    {
-      int indiceI = (i-(1%TILEX)) / TILEX;
-      for (unsigned j = 1; j < DIM-1; j+=TILEY) 
-      {
-        int indiceJ = (j-(1%TILEY)) / TILEY;
-        if(realIt == 1)
-        {
-          //printf("h");
-        	calculTableauTuile(i,j,indiceI,indiceJ);
-        	/*
-        	int nbCaseCouleur = 0;
-					for (unsigned x = i; x < i+TILEX; x++)
-					{
-						for (unsigned y = j; y < j+TILEY; y++)
-						{
-							update(i,j,x,y);
-							// Regarde si la case n'est pas vide est imcrémente le compteur.
-							if(next_img(x,y) != 0x0)
-								nbCaseCouleur++;
-						}
-					}
-					//printf("nbCaseCouleur = %d ",nbCaseCouleur);
-				
-					tabTuile[indiceI][indiceJ] = nbCaseCouleur;
-					printf("tabTuile : indiceI : %d, indiceJ : %d, nbCaseCouleur = %d\n", indiceI, indiceJ, nbCaseCouleur);
-					*/
-				}
+	for (unsigned it = 1; it <= nb_iter; it ++)
+	{
+		realIt++;
+		//printf("%d",realIt);
+		for (unsigned i = 1; i < DIM-1; i+=TILEX)
+		{
+			int indiceI = (i-(1%TILEX)) / TILEX;
+			for (unsigned j = 1; j < DIM-1; j+=TILEY) 
+			{
+				int indiceJ = (j-(1%TILEY)) / TILEY;
+				if(realIt == 1)
+					calculTableauTuile(i,j,indiceI,indiceJ);
 				else
 				{
-					
 					int indiceMaxTableau = TAILLETABLEAU - 1;
-					//printf("h");
 					int sommeDesVoisins = 0;
 					if(tabTuile[indiceI][indiceJ] == 0)
 					{
@@ -516,16 +504,14 @@ unsigned compute_v7(unsigned nb_iter)
 							calculTableauTuile(i,j,indiceI,indiceJ);
 					}
 					else
-					{
 						calculTableauTuile(i,j,indiceI,indiceJ);
-					}
 				}
-      }
-    }
-    swap_images ();
-  }
+			}
+		}
+		swap_images ();
+	}
 
-  return 0; // on ne s'arrête jamais
+	return 0; // on ne s'arrête jamais
 }
 
 /* * * * * * * * * * * * * * * 

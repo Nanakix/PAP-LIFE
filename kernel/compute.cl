@@ -33,16 +33,18 @@ __kernel void test (__global unsigned *in, __global unsigned *out)
   if (x != 0 && x < DIM-1 && y != 0 && y < DIM-1)
   {
     int somme = 0;
+    float4 tmp = 0;
     for (int i = -1; i < 2; i++)
     {
       for (int j = -1; j < 2; j++)
       {
-        float4 tmp = 0;
+        
         if (all(color_scatter(in[(y + i) * DIM + (x + j)]) == tmp))
         {
           //ne fait rien
         }
-        else{
+        else
+        {
           if (i == 0 && j == 0)
           {
           // on ne compte pas la cellule courante
@@ -54,7 +56,7 @@ __kernel void test (__global unsigned *in, __global unsigned *out)
           }
         }
       }
-    }
+    }		
     int result = 0;
     if (all(color_scatter(in[y * DIM + x ]) == 0))
     {
@@ -72,6 +74,13 @@ __kernel void test (__global unsigned *in, __global unsigned *out)
     }
     out[y * DIM + x] = result;
   }
+}
+
+_kernel void opti (__global unsigned *in, __global unsigned *out)
+{
+	int x = get_global_id (0);
+	int y = get_local_id (1);
+	
 }
 
 
