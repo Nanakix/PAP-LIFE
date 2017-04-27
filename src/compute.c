@@ -175,6 +175,7 @@ unsigned compute_v0 (unsigned nb_iter)
 {
    for (unsigned it = 1; it <= nb_iter; it ++)
   {
+	printf("%u \n",it);
     for (unsigned i = 1; i < DIM-1; i++)
       for (unsigned j = 1; j < DIM-1; j++) 
       {
@@ -277,27 +278,25 @@ unsigned compute_v4 (unsigned nb_iter)
 {
   for (unsigned it = 1; it <= nb_iter; it ++)
   {
-    #pragma omp parallel
-    #pragma omp single
-    {
-    for (unsigned i = 1; i < DIM-1; i+=TILEX)
-      for (unsigned j = 1; j < DIM-1; j+=TILEY) 
-      {
     
+	#pragma omp parallel for collapse(2)
+	
+	for (unsigned i = 1; i < DIM-1; i+=TILEX)
+	  for (unsigned j = 1; j < DIM-1; j+=TILEY) 
+	  {
+	#pragma omp task
+	{
 		for (unsigned x = i; x < i+TILEX; x++)
 		{
-		  #pragma omp task firstprivate(x)
 			for (unsigned y = j; y < j+TILEY; y++)
 			{
 				update(i,j,x,y);
 			}
 		}
-      }
-    #pragma omp taskwait
-    swap_images ();
-    } // end parallel
+	  }
+	} // end parallel
+swap_images ();
   }
-
   // retourne le nombre d'étapes nécessaires à la
   // stabilisation du calcul ou bien 0 si le calcul n'est pas
   // stabilisé au bout des nb_iter itérations
