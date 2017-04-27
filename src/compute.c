@@ -176,6 +176,123 @@ void update(unsigned i, unsigned j, unsigned x, unsigned y){
 			printf("deadbeef\n");
 	}
 }
+
+
+/* * * * * * * * * * * * * * * * * * *
+ * Fonctions pour version optimisée  *
+ * * * * * * * * * * * * * * * * * * */  
+
+// Permet de calculer et d'ajouter le contenu du tableau de tuile
+void calculTableauTuile(unsigned i, unsigned j, int indiceI, int indiceJ)
+{
+	int nbCaseCouleur = 0;
+	for (unsigned x = i; x < i+TILEX; x++)
+	{
+		for (unsigned y = j; y < j+TILEY; y++)
+		{
+			update(i,j,x,y);
+			// Regarde si la case n'est pas vide est imcrémente le compteur.
+			if(next_img(x,y) != 0x0)
+				nbCaseCouleur++;
+		}
+	}
+	//printf("nbCaseCouleur = %d ",nbCaseCouleur);
+	
+	tabTuile[indiceI][indiceJ] = nbCaseCouleur;
+	//printf("tabTuile : indiceI : %d, indiceJ : %d, nbCaseCouleur = %d\n", indiceI, indiceJ, nbCaseCouleur);
+}
+
+int check_neighbors_opti (int indiceI, int indiceJ)
+{
+	int sommeDesVoisins = 0;
+	int indiceMaxTableau = TAILLETABLEAU - 1;
+	if(indiceI == 0 && indiceJ == 0) // coin nord-ouest
+	{
+		// 3 voisins à voir s, se, e
+		sommeDesVoisins += tabTuile[indiceI][indiceJ+1]
+		+ tabTuile[indiceI+1][indiceJ]
+		+ tabTuile[indiceI+1][indiceJ+1];
+	}
+	else if(indiceI == 0)
+	{
+		if(indiceJ == indiceMaxTableau) // coin sud-ouest
+		{
+			// 3 voisins à voir n, ne, e
+			sommeDesVoisins += tabTuile[indiceI][indiceMaxTableau-1]
+			+ tabTuile[indiceI+1][indiceMaxTableau]
+			+ tabTuile[indiceI+1][indiceMaxTableau-1];
+		}
+		else // bord ouest hors coin
+		{
+			// 5 voisins à voir n, ne, e , se, s // 
+			sommeDesVoisins += tabTuile[indiceI][indiceJ-1]
+			+ tabTuile[indiceI+1][indiceJ-1]
+			+ tabTuile[indiceI+1][indiceJ]
+			+ tabTuile[indiceI][indiceJ+1]
+			+ tabTuile[indiceI+1][indiceJ+1];
+		}
+	}
+	else if(indiceJ == 0)
+	{
+		if(indiceI == indiceMaxTableau) // coin nord-est
+		{
+			// 3 voisins à voir o, so, s
+			sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ]
+			+ tabTuile[indiceMaxTableau][indiceJ+1]
+			+ tabTuile[indiceMaxTableau-1][indiceJ+1];
+		}
+		else // bord nord hors coin
+		{
+			// 5 voisins à voir o, so , s , se, e
+			sommeDesVoisins += tabTuile[indiceI-1][indiceJ]
+			+ tabTuile[indiceI-1][indiceJ+1]
+			+ tabTuile[indiceI][indiceJ+1]
+			+ tabTuile[indiceI+1][indiceJ+1]
+			+ tabTuile[indiceI+1][indiceJ];
+		}
+	}
+	else if(indiceI == indiceMaxTableau && indiceJ == indiceMaxTableau) // coin sud-est
+	{
+		// 3 voisins à voir o, no , n
+		sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceMaxTableau]
+		 + tabTuile[indiceMaxTableau-1][indiceMaxTableau-1]
+		 + tabTuile[indiceMaxTableau][indiceMaxTableau-1];
+	}
+	else if(indiceI == indiceMaxTableau) // bord est hors coin
+	{
+		// 5 voisins à voir n, no, o, so, s
+		sommeDesVoisins += tabTuile[indiceMaxTableau][indiceJ-1]
+		+ tabTuile[indiceMaxTableau-1][indiceJ-1]
+		+ tabTuile[indiceMaxTableau-1][indiceJ]
+		+ tabTuile[indiceMaxTableau-1][indiceJ+1]
+		+ tabTuile[indiceMaxTableau][indiceJ+1];
+	}
+	else if(indiceJ == indiceMaxTableau) // bord sud hors coin
+	{
+		// 5 voisins à voir o, no, n, ne, e
+		sommeDesVoisins += tabTuile[indiceI-1][indiceMaxTableau]
+		+ tabTuile[indiceI-1][indiceMaxTableau-1]
+		+ tabTuile[indiceI][indiceMaxTableau-1]
+		+ tabTuile[indiceI+1][indiceMaxTableau-1]
+		+ tabTuile[indiceI+1][indiceMaxTableau];
+	}
+	else // cellule hors bord
+	{
+		// 8 voisins à voir : toutes directions sauf soi-même
+		sommeDesVoisins += tabTuile[indiceI-1][indiceJ-1]
+		+ tabTuile[indiceI][indiceJ-1]
+		+ tabTuile[indiceI+1][indiceJ-1]
+		+ tabTuile[indiceI-1][indiceJ]
+		+ tabTuile[indiceI+1][indiceJ]
+		+ tabTuile[indiceI-1][indiceJ+1]
+		+ tabTuile[indiceI][indiceJ+1]
+		+ tabTuile[indiceI+1][indiceJ+1];
+	}
+	return sommeDesVoisins;
+}
+
+
+
 /* * * * * * * * * * * * * * * * 
  * Version séquentielle naïve  *
  * * * * * * * * * * * * * * * */
@@ -265,6 +382,38 @@ void first_touch_v2 ()
 // Renvoie le nombre d'itérations effectuées avant stabilisation, ou 0
 unsigned compute_v2(unsigned nb_iter)
 {
+	int indiceI = 0;
+	int indiceJ = 0;
+	for (unsigned it = 1; it <= nb_iter; it ++)
+	{
+		
+		#pragma omp parallel for shared(realIt) collapse(2) schedule(static,TAILLETABLEAU/TILEX) shared(indiceI, indiceJ)
+			for (unsigned i = 1; i < DIM-1; i++)
+			{
+				for (unsigned j = 1; j < DIM-1; j++) 
+				{
+					//printf("avant les indices \n");
+					indiceI = (i-(i%TILEX)) / TILEX;
+					indiceJ = (j-(j%TILEY)) / TILEY;
+					if(realIt == 1)
+						calculTableauTuile(i,j,indiceI,indiceJ);
+					else
+					{
+						if(tabTuile[indiceI][indiceJ] == 0)
+						{
+							printf("i : %d j : %d\n", i,j);
+							if(check_neighbors_opti(indiceI, indiceJ) != 0)
+								calculTableauTuile(i,j,indiceI,indiceJ);
+						}
+						else
+							calculTableauTuile(i,j,indiceI,indiceJ);
+					}
+				}
+			}
+		realIt++;
+		swap_images ();
+	}
+	return 0; // on ne s'arrête jamais
   return 0; // on ne s'arrête jamais
 }
 
@@ -373,114 +522,6 @@ unsigned compute_v6(unsigned nb_iter)
 		swap_images ();
 	}
   return 0;
-}
-// Permet de calculer et d'ajouter le contenu du tableau de tuile
-void calculTableauTuile(unsigned i, unsigned j, int indiceI, int indiceJ)
-{
-	int nbCaseCouleur = 0;
-	for (unsigned x = i; x < i+TILEX; x++)
-	{
-		for (unsigned y = j; y < j+TILEY; y++)
-		{
-			update(i,j,x,y);
-			// Regarde si la case n'est pas vide est imcrémente le compteur.
-			if(next_img(x,y) != 0x0)
-				nbCaseCouleur++;
-		}
-	}
-	//printf("nbCaseCouleur = %d ",nbCaseCouleur);
-	
-	tabTuile[indiceI][indiceJ] = nbCaseCouleur;
-	//printf("tabTuile : indiceI : %d, indiceJ : %d, nbCaseCouleur = %d\n", indiceI, indiceJ, nbCaseCouleur);
-}
-
-int check_neighbors_opti (int indiceI, int indiceJ)
-{
-	int sommeDesVoisins = 0;
-	int indiceMaxTableau = TAILLETABLEAU - 1;
-	if(indiceI == 0 && indiceJ == 0) // coin nord-ouest
-	{
-		// 3 voisins à voir s, se, e
-		sommeDesVoisins += tabTuile[indiceI][indiceJ+1];
-		sommeDesVoisins += tabTuile[indiceI+1][indiceJ];
-		sommeDesVoisins += tabTuile[indiceI+1][indiceJ+1];
-	}
-	else if(indiceI == 0)
-	{
-		if(indiceJ == indiceMaxTableau) // coin sud-ouest
-		{
-			// 3 voisins à voir n, ne, e
-			sommeDesVoisins += tabTuile[indiceI][indiceMaxTableau-1];
-			sommeDesVoisins += tabTuile[indiceI+1][indiceMaxTableau];
-			sommeDesVoisins += tabTuile[indiceI+1][indiceMaxTableau-1];
-		}
-		else // bord ouest hors coin
-		{
-			// 5 voisins à voir n, ne, e , se, s // 
-			sommeDesVoisins += tabTuile[indiceI][indiceJ-1];
-			sommeDesVoisins += tabTuile[indiceI+1][indiceJ-1];
-			sommeDesVoisins += tabTuile[indiceI+1][indiceJ];
-			sommeDesVoisins += tabTuile[indiceI][indiceJ+1];
-			sommeDesVoisins += tabTuile[indiceI+1][indiceJ+1];
-		}
-	}
-	else if(indiceJ == 0)
-	{
-		if(indiceI == indiceMaxTableau) // coin nord-est
-		{
-			// 3 voisins à voir o, so, s
-			sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ];
-			sommeDesVoisins += tabTuile[indiceMaxTableau][indiceJ+1];
-			sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ+1];
-		}
-		else // bord nord hors coin
-		{
-			// 5 voisins à voir o, so , s , se, e
-			sommeDesVoisins += tabTuile[indiceI-1][indiceJ];
-			sommeDesVoisins += tabTuile[indiceI-1][indiceJ+1];
-			sommeDesVoisins += tabTuile[indiceI][indiceJ+1];
-			sommeDesVoisins += tabTuile[indiceI+1][indiceJ+1];
-			sommeDesVoisins += tabTuile[indiceI+1][indiceJ];
-		}
-	}
-	else if(indiceI == indiceMaxTableau && indiceJ == indiceMaxTableau) // coin sud-est
-	{
-		// 3 voisins à voir o, no , n
-		sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceMaxTableau];
-		sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceMaxTableau-1];
-		sommeDesVoisins += tabTuile[indiceMaxTableau][indiceMaxTableau-1];
-	}
-	else if(indiceI == indiceMaxTableau) // bord est hors coin
-	{
-		// 5 voisins à voir n, no, o, so, s
-		sommeDesVoisins += tabTuile[indiceMaxTableau][indiceJ-1];
-		sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ-1];
-		sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ];
-		sommeDesVoisins += tabTuile[indiceMaxTableau-1][indiceJ+1];
-		sommeDesVoisins += tabTuile[indiceMaxTableau][indiceJ+1];
-	}
-	else if(indiceJ == indiceMaxTableau) // bord sud hors coin
-	{
-		// 5 voisins à voir o, no, n, ne, e
-		sommeDesVoisins += tabTuile[indiceI-1][indiceMaxTableau];
-		sommeDesVoisins += tabTuile[indiceI-1][indiceMaxTableau-1];
-		sommeDesVoisins += tabTuile[indiceI][indiceMaxTableau-1];
-		sommeDesVoisins += tabTuile[indiceI+1][indiceMaxTableau-1];
-		sommeDesVoisins += tabTuile[indiceI+1][indiceMaxTableau];
-	}
-	else // cellule hors bord
-	{
-		// 8 voisins à voir : toutes directions sauf soi-même
-		sommeDesVoisins += tabTuile[indiceI-1][indiceJ-1];
-		sommeDesVoisins += tabTuile[indiceI][indiceJ-1];
-		sommeDesVoisins += tabTuile[indiceI+1][indiceJ-1];
-		sommeDesVoisins += tabTuile[indiceI-1][indiceJ];
-		sommeDesVoisins += tabTuile[indiceI+1][indiceJ];
-		sommeDesVoisins += tabTuile[indiceI-1][indiceJ+1];
-		sommeDesVoisins += tabTuile[indiceI][indiceJ+1];
-		sommeDesVoisins += tabTuile[indiceI+1][indiceJ+1];
-	}
-	return sommeDesVoisins;
 }
 
 /* * * * * * * * * * * * * * * * * *
