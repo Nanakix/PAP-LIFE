@@ -127,7 +127,22 @@ unsigned will_live(unsigned x, unsigned y, bool alive){
 			return 0x0;
 		}
 }
-
+// Version compresser d'update
+void update2(unsigned i, unsigned j, unsigned x, unsigned y){
+	bool alive = cur_img(x,y) != 0x0;
+	if(((x == i || y == j) && (i == 0 || j == 0)) ||
+			((x == TILEX) && ((j == 0) || (y == TILEY))) ||
+			((y == j) && (i == 0 || j == 0)) ||
+			((y == TILEY)) && ((i == 0) || (x == TILEX)) ||
+			(x == DIM || y == DIM))
+	{
+		// nada
+	}
+	else
+	{
+		next_img(x,y) = will_live(x,y,alive);
+	}
+}
 
 /* donner le bon contexte à will_live  */
 void update(unsigned i, unsigned j, unsigned x, unsigned y){
@@ -467,22 +482,23 @@ unsigned compute_v3 (unsigned nb_iter)
 
 unsigned compute_v4 (unsigned nb_iter)
 {
+  unsigned i, j, x, y;
   for (unsigned it = 1; it <= nb_iter; it ++)
   {
     
 	#pragma omp parallel for collapse(2)
 	
-	for (unsigned i = 1; i < DIM-1; i+=TILEX)
+	for ( i = 1; i < DIM-1; i+=TILEX)
 	{
-		for (unsigned j = 1; j < DIM-1; j+=TILEY) 
+		for ( j = 1; j < DIM-1; j+=TILEY) 
 		{
-			#pragma omp task
+			#pragma omp task private(x, y)
 			{
-				for (unsigned x = i; x < i+TILEX; x++)
+				for ( x = i; x < i+TILEX; x++)
 				{
-					for (unsigned y = j; y < j+TILEY; y++)
+					for ( y = j; y < j+TILEY; y++)
 					{
-						update(i,j,x,y);
+						update2(i,j,x,y);
 					}
 				}
 			}
@@ -512,7 +528,7 @@ unsigned compute_v5 (unsigned nb_iter)
 			{
 				for (unsigned y = j; y < j+TILEY; y++)
 				{
-					update(i,j,x,y);
+					update2(i,j,x,y);
 				}
 			}
 		}
