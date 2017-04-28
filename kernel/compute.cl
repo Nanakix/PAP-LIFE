@@ -1,3 +1,4 @@
+//global unsigned realIt = 0;
 __kernel void transpose_naif (__global unsigned *in, __global unsigned *out)
 {
   int x = get_global_id (0);
@@ -56,7 +57,7 @@ __kernel void test (__global unsigned *in, __global unsigned *out)
           }
         }
       }
-    }		
+    }
     int result = 0;
     if (all(color_scatter(in[y * DIM + x ]) == 0))
     {
@@ -75,15 +76,45 @@ __kernel void test (__global unsigned *in, __global unsigned *out)
     out[y * DIM + x] = result;
   }
 }
-
-__kernel void opti (__global unsigned *in, __global unsigned *out)
+int calculeTuile(unsigned tile[DIM / TILEX][DIM / TILEX], int x, int y, int tailleLocalMax)
 {
+	int sommeDesVoisins = 0;
+	//int tailleLocalMax = get_local_size(0);
+	for (int j = -1; j < 2 ; j++)
+	{
+		for (int i = -1; i < 2; i++)
+		{
+			if(x+j == -1 ||
+				x+j == tailleLocalMax ||
+				y+i == -1 ||
+				y+i == tailleLocalMax)
+			{
+				//printf("hors-cadre ");
+			}
+			else
+			{
+				printf("somme ");
+				sommeDesVoisins += tile[x+i][y+j];
+			}
+		}
+	}
+	if(tile[x][y] != 0)
+		sommeDesVoisins -= tile[x][y];
+	return sommeDesVoisins;
+}
+
+__kernel void opti (__global unsigned *in, __global unsigned *out, __global int tab[DIM / TILEX][DIM / TILEX])
+{
+	//printf("tab : %d", tab[0][0]);
+	//realIt++;
 	int x = get_global_id (0);
 	int y = get_global_id (1);
+	__local unsigned tile[DIM / TILEX][DIM / TILEX];
 	int xloc = get_local_id (0);
   int yloc = get_local_id (1);
+  int tailleLocalMax = get_local_size(0);
   int tailleTableau = DIM / TILEX;
-	__local unsigned tile[DIM / TILEX][DIM / TILEX];
+
 	unsigned nbvoisins = 0;
 	float4 zero = 0;
 	if(all(color_scatter(in[y * DIM + x]) != zero))
@@ -92,32 +123,31 @@ __kernel void opti (__global unsigned *in, __global unsigned *out)
 	tile[xloc][yloc] = nbvoisins;
 	barrier(CLK_LOCAL_MEM_FENCE); // fin écriture des voisins
 	// A faire que par un thread
-	int sommeDesVoisins = 0;
-	int tailleLocalMax = get_local_size(0);
-	for (int j = -1; j < 2 ; j++)
+	//printf("x : %d, y : %d ",x, y);
+	double partieEntier;
+	double resteDivision;
+	resteDivision = modf((double) x/TILEX, &partieEntier) +
+									modf((double) y/TILEY, &partieEntier);
+	//printf("reste :%ld ", resteDivision);
+	if(resteDivision == (double) 0)
+		printf("gagné");
 	{
-		for (int i = -1; i < 2; i++)
+		if(tab[0][0] == -1)
 		{
-			if(xloc+j == -1 ||
-				xloc+j == tailleTableau ||
-				yloc+i == -1 ||
-				yloc+i == tailleTableau)
+			//calculTableauTuile
+		}
+		else
+		{
+			if(tab[xloc][yloc] == 0)
 			{
-				printf("hors cadre");
+				if(calculeTuile(tab, xloc, yloc, tailleLocalMax) != 0)
+					//calculTableauTuile
 			}
 			else
-			{
-				sommeDesVoisins += tabTuile[indiceI+i][indiceJ+j];
-			}
+				//calculTableauTuile
 		}
 	}
-	if(tabTuile[indiceI][indiceJ] != 0)
-		sommeDesVoisins -= tabTuile[indiceI][indiceJ];
-	//1 des voisins à une case vivante
-	if(sommeDesVoisins != 0)
-	{
-		
-	}
+
 }
 
 

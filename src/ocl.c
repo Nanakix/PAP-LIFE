@@ -42,7 +42,7 @@ cl_context context;
 cl_kernel update_kernel;
 cl_kernel compute_kernel;
 cl_command_queue queue;
-cl_mem tex_buffer, cur_buffer, next_buffer;
+cl_mem tex_buffer, cur_buffer, next_buffer, tab_buffer;
 
 static size_t file_size (const char *filename)
 {
@@ -276,6 +276,32 @@ void ocl_init (void)
   if (!next_buffer)
     exit_with_error ("Failed to allocate output buffer");
 
+  tab_buffer = clCreateBuffer (context, CL_MEM_READ_WRITE, sizeof(unsigned) * (DIM / TILEX)*(DIM / TILEX),
+				NULL, NULL);
+  if (!tab_buffer)
+    exit_with_error ("Failed to allocate output buffer");
+  else
+  {  
+    int tab[DIM / TILEX][DIM / TILEX];
+    //memset(tab, 9, sizeof(tab[0][0]) * (DIM / TILEX) * (DIM / TILEX));
+    for(int i = 0; i < DIM / TILEX; i++)
+    	for(int j = 0; j < DIM / TILEY; j++)
+    		tab[i][j] = -1;
+    /*
+    printf("%d \n", tab[1][1]);
+    printf("%d\n", DIM / TILEX);
+    printf("%d \n", tab[2][2]);
+    printf("%d \n", tab[3][3]);
+    printf("%d \n", tab[0][0]);
+    */
+    /*
+    for(int i = 0; i < DIM / TILEX; i++)
+    	for(int j = 0; j < DIM / TILEY; j++)
+    		tab[i][j] = 9999;
+    */
+    clEnqueueWriteBuffer(queue, tab_buffer, 0, 0,(DIM / TILEX)*(DIM / TILEX)*sizeof(unsigned), tab, 0, NULL, NULL);
+//    clEnqueueCopyBuffer(queue, tab, tab_buffer, 0, 0, (DIM / TILEX)*sizeof(unsigned), 0, NULL, NULL);
+  }
   printf ("Using %dx%d workitems grouped in %dx%d tiles \n", SIZE, SIZE, TILEX, TILEY);
 }
 
@@ -325,6 +351,34 @@ unsigned ocl_compute (unsigned nb_iter)
 
   return 0;
 }
+
+unsigned ocl_compute2(unsigned nb_iter)
+{
+  size_t global[2] = { SIZE, SIZE };  // global domain size for our calculation
+  size_t local[2]  = { TILEX, TILEY };  // local domain size for our calculation
+
+  for (unsigned it = 1; it <= nb_iter; it ++) {
+    
+    // Set kernel arguments
+    //
+    err = 0;
+    err  = clSetKernelArg (compute_kernel, 0, sizeof (cl_mem), &cur_buffer);
+    err  = clSetKernelArg (compute_kernel, 1, sizeof (cl_mem), &next_buffer);
+    err  = clSetKernelArg (compute_kernel, 2, sizeof (cl_mem), &tab_buffer);
+    check (err, "Failed to set kernel arguments");
+
+    err = clEnqueueNDRangeKernel (queue, compute_kernel, 2, NULL, global, local,
+				  0, NULL, NULL);
+    check(err, "Failed to execute kernel");
+
+    // Swap buffers
+    { cl_mem tmp = cur_buffer; cur_buffer = next_buffer; next_buffer = tmp; }
+
+  }
+
+  return 0;
+}
+
 
 void ocl_wait (void)
 {

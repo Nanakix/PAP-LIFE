@@ -3,7 +3,7 @@
 
 
 #include <SDL_opengl.h>
-
+#include<math.h>
 void ocl_init (void);
 void ocl_map_textures (GLuint texid);
 void ocl_send_image (unsigned *image);

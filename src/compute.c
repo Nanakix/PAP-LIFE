@@ -591,7 +591,8 @@ unsigned compute_v7(unsigned nb_iter)
  * * * * * * * * * * * * * * */
 unsigned compute_v8(unsigned nb_iter)
 {
-  return 0; // on ne s'arrête jamais
+  return ocl_compute2 (nb_iter);
+  //return 0; // on ne s'arrête jamais
 }
 
 /* * * * * * * * * * * * * * * * * *
@@ -599,7 +600,7 @@ unsigned compute_v8(unsigned nb_iter)
  * * * * * * * * * * * * * * * * * */
 unsigned compute_v9(unsigned nb_iter)
 {
-			for (unsigned it = 1; it <= nb_iter; it ++)
+	for (unsigned it = 1; it <= nb_iter; it ++)
 	{
 		realIt++;
 		#pragma omp parallel for collapse(2)
