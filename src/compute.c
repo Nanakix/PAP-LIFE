@@ -202,6 +202,35 @@ void calculTableauTuile(unsigned i, unsigned j, int indiceI, int indiceJ)
 	//printf("tabTuile : indiceI : %d, indiceJ : %d, nbCaseCouleur = %d\n", indiceI, indiceJ, nbCaseCouleur);
 }
 
+int check_neighbors_opti2(int indiceI, int indiceJ)
+{
+	//int tmp = 0;
+	int sommeDesVoisins = 0;
+	for (int j = -1; j < 2 ; j++)
+	{
+		for (int i = -1; i < 2; i++)
+		{
+			if((indiceI+i) == -1 || 
+				 (indiceI+i) == TAILLETABLEAU ||
+				(indiceJ+j) == -1 ||  
+				(indiceJ+j) == TAILLETABLEAU)
+			{
+				// rien
+				
+			}
+			else
+			{
+				sommeDesVoisins += tabTuile[indiceI+i][indiceJ+j];
+				//tmp++;
+			}
+		}
+	}
+	if(tabTuile[indiceI][indiceJ] != 0)
+		sommeDesVoisins -= tabTuile[indiceI][indiceJ];
+	//printf("nbvoisin : %d \n", tmp);
+	return sommeDesVoisins;
+}
+
 int check_neighbors_opti (int indiceI, int indiceJ)
 {
 	int sommeDesVoisins = 0;
@@ -301,7 +330,7 @@ unsigned compute_v0 (unsigned nb_iter)
 {
 	for (unsigned it = 1; it <= nb_iter; it ++)
 	{	
-		printf("%u \n",it);
+		//printf("%u \n",it);
 		for (unsigned i = 1; i < DIM-1; i++)
 		{
 			for (unsigned j = 1; j < DIM-1; j++) 

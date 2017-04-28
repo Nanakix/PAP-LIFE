@@ -76,11 +76,48 @@ __kernel void test (__global unsigned *in, __global unsigned *out)
   }
 }
 
-_kernel void opti (__global unsigned *in, __global unsigned *out)
+__kernel void opti (__global unsigned *in, __global unsigned *out)
 {
 	int x = get_global_id (0);
-	int y = get_local_id (1);
-	
+	int y = get_global_id (1);
+	int xloc = get_local_id (0);
+  int yloc = get_local_id (1);
+  int tailleTableau = DIM / TILEX;
+	__local unsigned tile[DIM / TILEX][DIM / TILEX];
+	unsigned nbvoisins = 0;
+	float4 zero = 0;
+	if(all(color_scatter(in[y * DIM + x]) != zero))
+		nbvoisins ++;
+	barrier(CLK_LOCAL_MEM_FENCE); // fin du comptage des voisins
+	tile[xloc][yloc] = nbvoisins;
+	barrier(CLK_LOCAL_MEM_FENCE); // fin écriture des voisins
+	// A faire que par un thread
+	int sommeDesVoisins = 0;
+	int tailleLocalMax = get_local_size(0);
+	for (int j = -1; j < 2 ; j++)
+	{
+		for (int i = -1; i < 2; i++)
+		{
+			if(xloc+j == -1 ||
+				xloc+j == tailleTableau ||
+				yloc+i == -1 ||
+				yloc+i == tailleTableau)
+			{
+				printf("hors cadre");
+			}
+			else
+			{
+				sommeDesVoisins += tabTuile[indiceI+i][indiceJ+j];
+			}
+		}
+	}
+	if(tabTuile[indiceI][indiceJ] != 0)
+		sommeDesVoisins -= tabTuile[indiceI][indiceJ];
+	//1 des voisins à une case vivante
+	if(sommeDesVoisins != 0)
+	{
+		
+	}
 }
 
 
