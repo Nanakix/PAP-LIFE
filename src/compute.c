@@ -599,7 +599,39 @@ unsigned compute_v8(unsigned nb_iter)
  * * * * * * * * * * * * * * * * * */
 unsigned compute_v9(unsigned nb_iter)
 {
-	return ocl_compute (nb_iter);
+			for (unsigned it = 1; it <= nb_iter; it ++)
+	{
+		realIt++;
+		#pragma omp parallel for collapse(2)
+			for (unsigned i = 1; i < DIM-1; i+=TILEX)
+			{
+				for (unsigned j = 1; j < DIM-1; j+=TILEY) 
+				{
+					#pragma omp task
+					{
+						int indiceI = (i-(1%TILEX)) / TILEX;
+						int indiceJ = (j-(1%TILEY)) / TILEY;
+						if(realIt == 1)
+							calculTableauTuile(i,j,indiceI,indiceJ);
+						else
+						{
+							if(tabTuile[indiceI][indiceJ] == 0)
+							{
+								if(check_neighbors_opti(indiceI, indiceJ) != 0)
+									calculTableauTuile(i,j,indiceI,indiceJ);
+							}
+							else
+								calculTableauTuile(i,j,indiceI,indiceJ);
+						}
+					}
+				}
+				
+			}
+			//end pragma omp parallel for
+		swap_images ();
+	}
+	return 0; // on ne s'arrête jamais
+	//return ocl_compute (nb_iter);
 }
 
 /* * * * * * * * * * * * * * *
