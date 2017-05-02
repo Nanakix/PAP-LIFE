@@ -20,12 +20,12 @@
 #include "graphics.h"
 #include "debug.h"
 
-#define check(err, ...)					\
-  do {							\
-    if (err != CL_SUCCESS) {				\
-      fprintf (stderr, "(%d) Error: " __VA_ARGS__ "\n", err);	\
-      exit (EXIT_FAILURE);				\
-    }							\
+#define check(err, ...)         \
+  do {              \
+    if (err != CL_SUCCESS) {        \
+      fprintf (stderr, "(%d) Error: " __VA_ARGS__ "\n", err); \
+      exit (EXIT_FAILURE);        \
+    }             \
   } while (0)
 
 #define MAX_PLATFORMS 3
@@ -165,12 +165,12 @@ void ocl_init (void)
   // Get list of devices
   //
   err = clGetDeviceIDs (pf [platform_no], CL_DEVICE_TYPE_GPU,
-			MAX_DEVICES, devices, &nb_devices);
+      MAX_DEVICES, devices, &nb_devices);
   PRINT_DEBUG ('o', "nb devices = %d\n", nb_devices);
 
   if (nb_devices == 0) {
     exit_with_error ("No GPU found on platform %d (%s - %s). Try PLATFORM=<p> ./prog blabla\n",
-		     platform_no, name, vendor);
+         platform_no, name, vendor);
   }
   if (dev >= nb_devices)
     exit_with_error ("Device number #%d too high\n", dev);
@@ -211,7 +211,7 @@ void ocl_init (void)
 
   // Load program source into memory
   //
-  const char	*opencl_prog;
+  const char  *opencl_prog;
   opencl_prog = file_load ("kernel/compute.cl");
 
   // Attach program source to context
@@ -225,8 +225,8 @@ void ocl_init (void)
     char flags[1024];
 
     sprintf (flags,
-	     "-cl-mad-enable -cl-fast-relaxed-math -DDIM=%d -DSIZE=%d -DTILEX=%d -DTILEY=%d",
-	     DIM, SIZE, TILEX, TILEY);
+       "-cl-mad-enable -cl-fast-relaxed-math -DDIM=%d -DSIZE=%d -DTILEX=%d -DTILEY=%d",
+       DIM, SIZE, TILEX, TILEY);
 
     err = clBuildProgram (program, 0, NULL, flags, NULL, NULL);
     if(err != CL_SUCCESS) {
@@ -236,16 +236,16 @@ void ocl_init (void)
       //
       clGetProgramBuildInfo (program, devices [dev], CL_PROGRAM_BUILD_LOG, 0, NULL, &len);
       {
-	char buffer[len+1];
+  char buffer[len+1];
 
-	fprintf (stderr, "--- Compiler log ---\n");
-	clGetProgramBuildInfo (program, devices [dev], CL_PROGRAM_BUILD_LOG,
-			       sizeof (buffer), buffer, NULL);
-	fprintf (stderr, "%s\n", buffer);
-	fprintf (stderr, "--------------------\n");
+  fprintf (stderr, "--- Compiler log ---\n");
+  clGetProgramBuildInfo (program, devices [dev], CL_PROGRAM_BUILD_LOG,
+             sizeof (buffer), buffer, NULL);
+  fprintf (stderr, "%s\n", buffer);
+  fprintf (stderr, "--------------------\n");
       }
       if(err != CL_SUCCESS)
-	exit_with_error ("Failed to build program!\n");
+  exit_with_error ("Failed to build program!\n");
     }
   }
 
@@ -267,17 +267,17 @@ void ocl_init (void)
   // Allocate buffers inside device memory
   //
   cur_buffer = clCreateBuffer (context, CL_MEM_READ_WRITE, sizeof(unsigned) * DIM * DIM,
-			       NULL, NULL);
+             NULL, NULL);
   if (!cur_buffer)
     exit_with_error ("Failed to allocate input buffer");
 
   next_buffer = clCreateBuffer (context, CL_MEM_READ_WRITE, sizeof(unsigned) * DIM * DIM,
-				NULL, NULL);
+        NULL, NULL);
   if (!next_buffer)
     exit_with_error ("Failed to allocate output buffer");
 
   tab_buffer = clCreateBuffer (context, CL_MEM_READ_WRITE, sizeof(unsigned) * (DIM / TILEX)*(DIM / TILEX),
-				NULL, NULL);
+        NULL, NULL);
   if (!tab_buffer)
     exit_with_error ("Failed to allocate output buffer");
   else
@@ -285,8 +285,8 @@ void ocl_init (void)
     int tab[DIM / TILEX][DIM / TILEX];
     //memset(tab, 9, sizeof(tab[0][0]) * (DIM / TILEX) * (DIM / TILEX));
     for(int i = 0; i < DIM / TILEX; i++)
-    	for(int j = 0; j < DIM / TILEY; j++)
-    		tab[i][j] = -1;
+      for(int j = 0; j < DIM / TILEY; j++)
+        tab[i][j] = -1;
     /*
     printf("%d \n", tab[1][1]);
     printf("%d\n", DIM / TILEX);
@@ -296,8 +296,8 @@ void ocl_init (void)
     */
     /*
     for(int i = 0; i < DIM / TILEX; i++)
-    	for(int j = 0; j < DIM / TILEY; j++)
-    		tab[i][j] = 9999;
+      for(int j = 0; j < DIM / TILEY; j++)
+        tab[i][j] = 9999;
     */
     clEnqueueWriteBuffer(queue, tab_buffer, 0, 0,(DIM / TILEX)*(DIM / TILEX)*sizeof(unsigned), tab, 0, NULL, NULL);
 //    clEnqueueCopyBuffer(queue, tab, tab_buffer, 0, 0, (DIM / TILEX)*sizeof(unsigned), 0, NULL, NULL);
@@ -309,18 +309,18 @@ void ocl_map_textures (GLuint texid)
 {
   /* Shared texture buffer with OpenGL. */
   tex_buffer = clCreateFromGLTexture (context, CL_MEM_READ_WRITE,
-				      GL_TEXTURE_2D, 0, texid, &err);
+              GL_TEXTURE_2D, 0, texid, &err);
   check (err, "Failed to map texture buffer\n");
 }
 
 void ocl_send_image (unsigned *image)
 {
   err = clEnqueueWriteBuffer (queue, cur_buffer, CL_TRUE, 0,
-			      sizeof (unsigned) * DIM * DIM, image, 0, NULL, NULL);
+            sizeof (unsigned) * DIM * DIM, image, 0, NULL, NULL);
   check (err, "Failed to write to cur_buffer");
 
   err = clEnqueueWriteBuffer (queue, next_buffer, CL_TRUE, 0,
-			      sizeof (unsigned) * DIM * DIM, image, 0, NULL, NULL);
+            sizeof (unsigned) * DIM * DIM, image, 0, NULL, NULL);
   check (err, "Failed to write to next_buffer");
 
   PRINT_DEBUG ('o', "Initial image sent to device.\n");
@@ -341,7 +341,7 @@ unsigned ocl_compute (unsigned nb_iter)
     check (err, "Failed to set kernel arguments");
 
     err = clEnqueueNDRangeKernel (queue, compute_kernel, 2, NULL, global, local,
-				  0, NULL, NULL);
+          0, NULL, NULL);
     check(err, "Failed to execute kernel");
 
     // Swap buffers
@@ -368,7 +368,7 @@ unsigned ocl_compute2(unsigned nb_iter)
     check (err, "Failed to set kernel arguments");
 
     err = clEnqueueNDRangeKernel (queue, compute_kernel, 2, NULL, global, local,
-				  0, NULL, NULL);
+          0, NULL, NULL);
     check(err, "Failed to execute kernel");
 
     // Swap buffers
@@ -402,7 +402,7 @@ void ocl_update_texture (void)
   check (err, "Failed to set kernel arguments");
 
   err = clEnqueueNDRangeKernel (queue, update_kernel, 2, NULL, global, local,
-			       0, NULL, NULL);
+             0, NULL, NULL);
   check(err, "Failed to execute kernel");
 
   ocl_release ();

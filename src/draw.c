@@ -27,26 +27,26 @@ static void gun (int x, int y, int version)
   if (version == 0)
     for (int i=0; i < 11; i++)
       for(int j=0; j < 38; j++)
-	if (glider_gun [i][j])
-	  cur_img (i+x, j+y) = couleur;
+  if (glider_gun [i][j])
+    cur_img (i+x, j+y) = couleur;
 
   if (version == 1)
     for (int i=0; i < 11; i++)
       for(int j=0; j < 38; j++)
-	if (glider_gun [i][j])
-	  cur_img (x-i, j+y) = couleur;
+  if (glider_gun [i][j])
+    cur_img (x-i, j+y) = couleur;
 
   if (version == 2)
     for (int i=0; i < 11; i++)
       for(int j=0; j < 38; j++)
-	if (glider_gun [i][j])
-	  cur_img (x-i, y-j) = couleur;
+  if (glider_gun [i][j])
+    cur_img (x-i, y-j) = couleur;
 
   if (version == 3)
     for (int i=0; i < 11; i++)
       for(int j=0; j < 38; j++)
-	if (glider_gun [i][j])
-	  cur_img (i+x, y-j) = couleur;
+  if (glider_gun [i][j])
+    cur_img (i+x, y-j) = couleur;
 
 }
 
@@ -55,7 +55,7 @@ void draw_stable(void)
   for (int i=1; i < DIM-2; i+=4)
     for(int j=1; j < DIM-2; j+=4)
       {
-	cur_img (i, j) =cur_img (i, (j+1)) =cur_img ((i+1), j) =cur_img ((i+1), (j+1)) = couleur;
+  cur_img (i, j) =cur_img (i, (j+1)) =cur_img ((i+1), j) =cur_img ((i+1), (j+1)) = couleur;
       }
 }
 
@@ -76,7 +76,7 @@ void draw_random (void)
   for (int i=1; i < DIM-1; i++)
     for(int j=1; j < DIM-1; j++)
       {
-	cur_img (i, j) = random() & 01; 
+  cur_img (i, j) = random() & 01; 
       }
 }
   
