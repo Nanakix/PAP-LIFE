@@ -162,15 +162,21 @@ void remplissageTuileVoisin(__global unsigned *in, __global int tab[DIM / TILEX]
 	__local unsigned tile[DIM / TILEX][DIM / TILEX];
 	int xloc = get_local_id (0);
   int yloc = get_local_id (1);
+  
+  
   int tailleTableau = DIM / TILEX;
 
 	unsigned nbvoisins = 0;
 	float4 zero = 0;
-	if(all(color_scatter(in[y * DIM + x]) != zero))
+	printf("if %u, y : %d, x %d \n", color_scatter(in[y * DIM + x]), y, x);
+	if(all(color_scatter(in[y * DIM + x]) == zero));
+	else
 		nbvoisins ++;
 	barrier(CLK_LOCAL_MEM_FENCE); // fin du comptage des voisins
 	tab[xloc][yloc] = nbvoisins;
+	//printf(" %u ", nbvoisins);
 	barrier(CLK_LOCAL_MEM_FENCE); // fin écriture des voisins
+	
 }
 
 __kernel void opti (__global unsigned *in, __global unsigned *out, __global int tab[DIM / TILEX][DIM / TILEX])
@@ -208,13 +214,16 @@ __kernel void opti (__global unsigned *in, __global unsigned *out, __global int 
 	{
 		if(tab[0][0] == -1)
 		{
+			//printf(" %d ", tab[xloc][yloc]);
 			//calculTableauTuile
 			remplissageTuileVoisin(in, tab, x, y);
+			printf(" %d ", tab[xloc][yloc]);
 		}
 		else
 		{
 			if(tab[xloc][yloc] == 0)
 			{
+				//printf(" %d ", tab[xloc][yloc]);
 				if(calculeTuile(tab, xloc, yloc, tailleLocalMax) != 0)
 				{
 					//calculTableauTuile
@@ -224,6 +233,7 @@ __kernel void opti (__global unsigned *in, __global unsigned *out, __global int 
 			}
 			else
 			{
+				printf(" %d ", tab[xloc][yloc]);
 				//calculTableauTuile
 				test2(in, out, x, y);
 				remplissageTuileVoisin(in, tab, x, y);

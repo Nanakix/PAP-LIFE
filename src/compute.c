@@ -133,7 +133,7 @@ void update2(unsigned i, unsigned j, unsigned x, unsigned y){
 	if(((x == i || y == j) && (i == 0 || j == 0)) ||
 			((x == TILEX) && ((j == 0) || (y == TILEY))) ||
 			((y == j) && (i == 0 || j == 0)) ||
-			((y == TILEY)) && ((i == 0) || (x == TILEX)) ||
+			((y == TILEY) && ((i == 0) || (x == TILEX))) ||
 			(x == DIM || y == DIM))
 	{
 		// nada
@@ -428,13 +428,14 @@ unsigned compute_v2(unsigned nb_iter)
 {
 	int indiceI = 0;
 	int indiceJ = 0;
+	unsigned i, j;
 	for (unsigned it = 1; it <= nb_iter; it ++)
 	{
 		
-		#pragma omp parallel for shared(realIt) collapse(2) schedule(static,TAILLETABLEAU/TILEX) shared(indiceI, indiceJ)
-			for (unsigned i = 1; i < DIM-1; i++)
+		#pragma omp parallel for collapse(2) schedule(static,TILEX) firstprivate(indiceI,indiceJ) shared(i, j)
+			for ( i = 1; i < DIM-1; i+=TILEX)
 			{
-				for (unsigned j = 1; j < DIM-1; j++) 
+				for ( j = 1; j < DIM-1; j+=TILEX) 
 				{
 					//printf("avant les indices \n");
 					indiceI = (i-(i%TILEX)) / TILEX;
@@ -445,7 +446,7 @@ unsigned compute_v2(unsigned nb_iter)
 					{
 						if(tabTuile[indiceI][indiceJ] == 0)
 						{
-							printf("i : %d j : %d\n", i,j);
+							//printf("i : %d j : %d\n", i,j);
 							if(check_neighbors_opti(indiceI, indiceJ) != 0)
 								calculTableauTuile(i,j,indiceI,indiceJ);
 						}
@@ -458,7 +459,7 @@ unsigned compute_v2(unsigned nb_iter)
 		swap_images ();
 	}
 	return 0; // on ne s'arrête jamais
-  return 0; // on ne s'arrête jamais
+ // return 0; // on ne s'arrête jamais
 }
 
 
@@ -624,7 +625,7 @@ unsigned compute_v9(unsigned nb_iter)
 			{
 				for (unsigned j = 1; j < DIM-1; j+=TILEY) 
 				{
-					#pragma omp task
+					#pragma omp task shared(i,j)
 					{
 						int indiceI = (i-(1%TILEX)) / TILEX;
 						int indiceJ = (j-(1%TILEY)) / TILEY;
