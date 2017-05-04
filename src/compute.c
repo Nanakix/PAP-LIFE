@@ -96,19 +96,31 @@ unsigned opencl_used [] = {
  
 /* déterminer l'état d'une cellule pour la prochaine itération */
 unsigned will_live(unsigned x, unsigned y, bool alive){
-  int somme = 0;
-  int i, j;
+  //~ int somme = 0;
+  //~ int i, j;
 
-  for (j = -1; j < 2 ; j++)
-  {
-    for (i = -1; i < 2; i++)
-    {
-      if (cur_img(x+i,y+j) != 0x0 ) // on regarde si la voisine est vivante
-        somme += 1; 
-    }
-  }
-  if(cur_img(x,y) != 0x0)
-    somme -=1;
+  //~ for (j = -1; j < 2 ; j++)
+  //~ {
+    //~ for (i = -1; i < 2; i++)
+    //~ {
+      //~ if (cur_img(x+i,y+j) != 0x0 ) // on regarde si la voisine est vivante
+        //~ somme += 1; 
+    //~ }
+  //~ }
+  
+  
+  //~ if(cur_img(x,y) != 0x0)
+    //~ somme -=1;
+    
+   int somme = (cur_img(x-1,y-1) != 0x0)
+		  + (cur_img(x-1,y) != 0x0)
+		  + (cur_img(x-1,y+1) != 0x0)
+		  + (cur_img(x,y-1) != 0x0)
+		  + (cur_img(x,y+1) != 0x0)
+		  + (cur_img(x+1,y-1) != 0x0)
+		  + (cur_img(x+1,y) != 0x0)
+		  + (cur_img(x+1,y+1) != 0x0);
+    
   if (alive == 0) 
   {
     if (somme == 3) // Résurrection
@@ -220,7 +232,7 @@ void calculTableauTuile(unsigned i, unsigned j, int indiceI, int indiceJ)
 	La fonction check_neighbors_opti permet de comptabiliser la somme des voisins des tuiles 
 		de la tuile courante
 */
-// Version compresser de check_neighbors_opti
+// Version compressée de check_neighbors_opti
 int check_neighbors_opti2(int indiceI, int indiceJ)
 {
   int sommeDesVoisins = 0;
@@ -386,25 +398,28 @@ void first_touch_v1 ()
 unsigned compute_v1(unsigned nb_iter)
 {
   /* version naïve */ 
-  #pragma omp parallel for schedule(dynamic, 16)
   for (unsigned it = 1; it <= nb_iter; it ++)
   {
+    #pragma omp parallel for schedule(static)
     for (unsigned i = 1; i < DIM-1; i++)
     {
       for (unsigned j = 1; j < DIM-1; j++) 
-      {
-        if(i != 0 && i != DIM && j != 0 && j != DIM){
-          if (cur_img(i,j) == 0) // si la cellule est morte
-            next_img(i,j) = will_live(i,j,0);
-          else 
-            next_img(i,j) = will_live(i,j,1);
-        }
-      }
-    }
+		{
+			if(i != 0 && i != DIM && j != 0 && j != DIM)
+			{
+				if (cur_img(i,j) == 0) // si la cellule est morte
+					next_img(i,j) = will_live(i,j,0);
+				else 
+					next_img(i,j) = will_live(i,j,1);
+			}
+      
+		}
     swap_images ();
+	}
   }
   return 0;
 }
+
 
 
 
