@@ -439,7 +439,7 @@ unsigned compute_v2(unsigned nb_iter)
   unsigned i, j;
   for (unsigned it = 1; it <= nb_iter; it ++)
   {
-    #pragma omp parallel for collapse(2) schedule(static,TILEX) firstprivate(indiceI,indiceJ) shared(i, j)
+    #pragma omp parallel for collapse(2) schedule(static) firstprivate(indiceI,indiceJ) 
     for ( i = 1; i < DIM-1; i+=TILEX)
     {
       for ( j = 1; j < DIM-1; j+=TILEX) 
@@ -495,7 +495,7 @@ unsigned compute_v4 (unsigned nb_iter)
     {
       for ( j = 1; j < DIM-1; j+=TILEY) 
       {
-        #pragma omp task private(x, y)
+        #pragma omp task firstprivate(x, y)
         {
           for ( x = i; x < i+TILEX; x++)
           {
@@ -553,7 +553,7 @@ unsigned compute_v6(unsigned nb_iter)
 {
   for (unsigned it = 1; it <= nb_iter; it ++)
   {       
-    #pragma omp parallel for collapse(2) schedule(static,32)
+    #pragma omp parallel for collapse(2) schedule(static)
     for (unsigned i = 1; i < DIM-1; i++)
     {
       for (unsigned j = 1; j < DIM-1; j++) 
@@ -625,7 +625,7 @@ unsigned compute_v9(unsigned nb_iter)
     {
       for (unsigned j = 1; j < DIM-1; j+=TILEY) 
       {
-        #pragma omp task shared(i,j)
+        #pragma omp task firstprivate(i,j)
         {
           int indiceI = (i-(1%TILEX)) / TILEX;
           int indiceJ = (j-(1%TILEY)) / TILEY;
