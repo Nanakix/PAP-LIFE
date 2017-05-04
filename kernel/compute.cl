@@ -1,4 +1,5 @@
 //global unsigned realIt = 0;
+#define COULEUR 0xFF00FFFF
 __kernel void transpose_naif (__global unsigned *in, __global unsigned *out)
 {
   int x = get_global_id (0);
@@ -28,44 +29,30 @@ static float4 color_scatter (unsigned c);
 
 int test2(__global unsigned *in, __global unsigned *out, int x, int y)
 {
-    unsigned tmp_couleur = 0;
-    int somme = 0;
+  int somme = 0;
   if (x != 0 && x < DIM-1 && y != 0 && y < DIM-1)
   {
-    for (int i = -1; i < 2; i++)
-    {
-      for (int j = -1; j < 2; j++)
-      {
-        if (all(color_scatter(in[(y + i) * DIM + (x + j)]) == 0))
-        {
-          //ne fait rien
-        }
-        else
-        {
-          if (i == 0 && j == 0)
-          {
-          // on ne compte pas la cellule courante
-          }
-          else
-          {
-            somme += 1;
-            tmp_couleur = in[(y + i) * DIM + (x + j)];
-          }
-        }
-      }
-    }
+    int somme = (in[(y - 1) * DIM + (x - 1)] != 0)
+              + (in[(y - 1) * DIM + x] != 0)
+              + (in[(y - 1) * DIM + (x + 1)] != 0)
+              + (in[y * DIM + (x - 1)] != 0)
+              + (in[y * DIM + (x + 1)] != 0)
+              + (in[(y + 1) * DIM + (x - 1)] != 0)
+              + (in[(y + 1) * DIM + x] != 0)
+              + (in[(y + 1) * DIM + (x + 1)] != 0);
+
     int result = 0;
-    if (all(color_scatter(in[y * DIM + x ]) == 0))
+    if (in[y * DIM + x ] == 0)
     {
       if (somme == 3)
-        result = tmp_couleur;
+        result = COULEUR;
       else
         result = 0;
     }
     else
     {
       if (somme == 2 || somme == 3)
-        result = tmp_couleur;
+        result = COULEUR;
       else
         result = 0;
     }
@@ -77,53 +64,6 @@ __kernel void test (__global unsigned *in, __global unsigned *out)
 {
   int x = get_global_id (0);
   int y = get_global_id (1);
-  /*
-  if (x != 0 && x < DIM-1 && y != 0 && y < DIM-1)
-  {
-  
-    int somme = 0;
-    float4 tmp = 0;
-    for (int i = -1; i < 2; i++)
-    {
-      for (int j = -1; j < 2; j++)
-      {
-        
-        if (all(color_scatter(in[(y + i) * DIM + (x + j)]) == tmp))
-        {
-          //ne fait rien
-        }
-        else
-        {
-          if (i == 0 && j == 0)
-          {
-          // on ne compte pas la cellule courante
-          }
-          else
-          {
-            somme += 1;
-            tmp_couleur = in[(y + i) * DIM + (x + j)];
-          }
-        }
-      }
-    }
-    int result = 0;
-    if (all(color_scatter(in[y * DIM + x ]) == 0))
-    {
-      if (somme == 3)
-        result = tmp_couleur;
-      else
-        result = 0;
-    }
-    else
-    {
-      if (somme == 2 || somme == 3)
-        result = tmp_couleur;
-      else
-        result = 0;
-    }
-  out[y * DIM + x] = result;
-  }
-    */
     test2(in, out, x, y);
 }
 

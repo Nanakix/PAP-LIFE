@@ -96,23 +96,7 @@ unsigned opencl_used [] = {
  
 /* déterminer l'état d'une cellule pour la prochaine itération */
 unsigned will_live(unsigned x, unsigned y, bool alive){
-  //~ int somme = 0;
-  //~ int i, j;
-
-  //~ for (j = -1; j < 2 ; j++)
-  //~ {
-    //~ for (i = -1; i < 2; i++)
-    //~ {
-      //~ if (cur_img(x+i,y+j) != 0x0 ) // on regarde si la voisine est vivante
-        //~ somme += 1; 
-    //~ }
-  //~ }
-  
-  
-  //~ if(cur_img(x,y) != 0x0)
-    //~ somme -=1;
-    
-   int somme = (cur_img(x-1,y-1) != 0x0)
+  int somme = (cur_img(x-1,y-1) != 0x0)
 		  + (cur_img(x-1,y) != 0x0)
 		  + (cur_img(x-1,y+1) != 0x0)
 		  + (cur_img(x,y-1) != 0x0)
@@ -439,7 +423,7 @@ unsigned compute_v2(unsigned nb_iter)
   unsigned i, j;
   for (unsigned it = 1; it <= nb_iter; it ++)
   {
-    #pragma omp parallel for collapse(2) schedule(static) firstprivate(indiceI,indiceJ) 
+    #pragma omp parallel for collapse(2) schedule(dynamic) firstprivate(indiceI,indiceJ) 
     for ( i = 1; i < DIM-1; i+=TILEX)
     {
       for ( j = 1; j < DIM-1; j+=TILEX) 
@@ -551,23 +535,29 @@ unsigned compute_v5 (unsigned nb_iter)
 
 unsigned compute_v6(unsigned nb_iter)
 {
+  unsigned i, j, x, y;
   for (unsigned it = 1; it <= nb_iter; it ++)
-  {       
-    #pragma omp parallel for collapse(2) schedule(static)
-    for (unsigned i = 1; i < DIM-1; i++)
+  {
+    #pragma omp parallel for collapse(2) 
+    for ( i = 1; i < DIM-1; i+=TILEX)
     {
-      for (unsigned j = 1; j < DIM-1; j++) 
+      for ( j = 1; j < DIM-1; j+=TILEY) 
       {
-        if(i != 0 && i != DIM && j != 0 && j != DIM){  
-          if (cur_img(i,j) == 0) // si la cellule est morte
-            next_img(i,j) = will_live(i,j,0);
-          else 
-            next_img(i,j) = will_live(i,j,1);
+        #pragma omp parallel for collapse(2) schedule(static) firstprivate(i, j)
+        for ( x = i; x < i+TILEX; x++)
+        {
+          for ( y = j; y < j+TILEY; y++)
+          {
+            update2(i,j,x,y);
+          }
         }
       }
-    } // end parallel for
+    }
     swap_images ();
   }
+  // retourne le nombre d'étapes nécessaires à la
+  // stabilisation du calcul ou bien 0 si le calcul n'est pas
+  // stabilisé au bout des nb_iter itérations
   return 0;
 }
 
