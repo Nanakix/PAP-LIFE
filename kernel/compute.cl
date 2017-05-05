@@ -95,25 +95,22 @@ int calculeTuile(unsigned tile[DIM / TILEX][DIM / TILEX], int x, int y, int tail
 }
 
 
-void remplissageTuileVoisin(__global unsigned *in, __global int tab[DIM / TILEX][DIM / TILEX], int x, int y)
+void remplissageTuileVoisin(__local int tab[TILEX][TILEX])
 {
-  __local unsigned tile[DIM / TILEX][DIM / TILEX];
   int xloc = get_local_id (0);
   int yloc = get_local_id (1);
   
   
-  int tailleTableau = DIM / TILEX;
+  //int tailleTableau = DIM / TILEX;
 
   unsigned nbvoisins = 0;
-  float4 zero = 0;
-  printf("if %u, y : %d, x %d \n", color_scatter(in[y * DIM + x]), y, x);
-  if(all(color_scatter(in[y * DIM + x]) == zero));
+  if(tab[xloc][yloc] != 0);
   else
     nbvoisins ++;
-  barrier(CLK_LOCAL_MEM_FENCE); // fin du comptage des voisins
-  tab[xloc][yloc] = nbvoisins;
-  //printf(" %u ", nbvoisins);
-  barrier(CLK_LOCAL_MEM_FENCE); // fin écriture des voisins
+  //barrier(CLK_LOCAL_MEM_FENCE); // fin du comptage des voisins
+  //tab[xloc][yloc] = nbvoisins;
+  printf(" %u ", nbvoisins);
+  //barrier(CLK_LOCAL_MEM_FENCE); // fin écriture des voisins
   
 }
 
@@ -124,10 +121,12 @@ __kernel void opti (__global unsigned *in, __global unsigned *out, __global int 
   int x = get_global_id (0);
   int y = get_global_id (1);
   
-  __local unsigned tile[DIM / TILEX][DIM / TILEX];
+  __local unsigned tile[TILEX][TILEY];
   int xloc = get_local_id (0);
   int yloc = get_local_id (1);
   int tailleLocalMax = get_local_size(0);
+  
+  tile[xloc][yloc] = in[y * DIM +x];
   /*
   
   int tailleTableau = DIM / TILEX;
@@ -154,9 +153,10 @@ __kernel void opti (__global unsigned *in, __global unsigned *out, __global int 
     {
       //printf(" %d ", tab[xloc][yloc]);
       //calculTableauTuile
-      remplissageTuileVoisin(in, tab, x, y);
-      printf(" %d ", tab[xloc][yloc]);
+      remplissageTuileVoisin(tile);
+      printf(" tile %u ", tile[xloc][yloc]);
     }
+    /*
     else
     {
       if(tab[xloc][yloc] == 0)
@@ -177,6 +177,7 @@ __kernel void opti (__global unsigned *in, __global unsigned *out, __global int 
         remplissageTuileVoisin(in, tab, x, y);
       }
     }
+    */
   }
   
 

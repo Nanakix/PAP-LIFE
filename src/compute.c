@@ -388,18 +388,16 @@ unsigned compute_v1(unsigned nb_iter)
     for (unsigned i = 1; i < DIM-1; i++)
     {
       for (unsigned j = 1; j < DIM-1; j++) 
-		{
-			if(i != 0 && i != DIM && j != 0 && j != DIM)
-			{
-				if (cur_img(i,j) == 0) // si la cellule est morte
-					next_img(i,j) = will_live(i,j,0);
-				else 
-					next_img(i,j) = will_live(i,j,1);
-			}
-      
-		}
+      {
+        if(i != 0 && i != DIM && j != 0 && j != DIM){  
+          if (cur_img(i,j) == 0) // si la cellule est morte
+              next_img(i,j) = will_live(i,j,0);
+          else
+            next_img(i,j) = will_live(i,j,1);
+        }
+      }
+    }
     swap_images ();
-	}
   }
   return 0;
 }
