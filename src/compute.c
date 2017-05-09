@@ -109,14 +109,13 @@ unsigned will_live(unsigned x, unsigned y, bool alive){
   {
     if (somme == 3) // Résurrection
       return 0xFFFF00FF;
-    return 0x0;
   }
   else
   {
     if (somme == 2 || somme == 3) // La cellule vit si la somme de ses voisins est égale à 2 ou 3
       return COULEUR;
-    return 0x0;
   }
+  return 0x0;
 }
 
 /******     Voici deux versions de la fonction update    ************************/
@@ -159,7 +158,7 @@ void update(unsigned i, unsigned j, unsigned x, unsigned y){
     }
     else if (x == TILEX)
     {
-      if (j == 0 )
+      if (j == 0)
         ;// rien
       else if (y == TILEY)
         ;// rien
@@ -633,11 +632,10 @@ unsigned compute_v9(unsigned nb_iter)
       }
       
     }
-      //end pragma omp parallel for
+      //end pragma omp parallel for collapse(2)
     swap_images ();
   }
   return 0; // on ne s'arrête jamais
-  //return ocl_compute (nb_iter);
 }
 
 /* * * * * * * * * * * * * * *

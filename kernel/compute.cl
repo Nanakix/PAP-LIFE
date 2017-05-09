@@ -29,7 +29,6 @@ static float4 color_scatter (unsigned c);
 
 int test2(__global unsigned *in, __global unsigned *out, int x, int y)
 {
-  int somme = 0;
   if (x != 0 && x < DIM-1 && y != 0 && y < DIM-1)
   {
     int somme = (in[(y - 1) * DIM + (x - 1)] != 0)
@@ -45,16 +44,12 @@ int test2(__global unsigned *in, __global unsigned *out, int x, int y)
     if (in[y * DIM + x ] == 0)
     {
       if (somme == 3)
-        result = COULEUR;
-      else
-        result = 0;
+        result = 0xFFFF00FF;
     }
     else
     {
       if (somme == 2 || somme == 3)
         result = COULEUR;
-      else
-        result = 0;
     }
     out[y * DIM + x] = result;
   }
